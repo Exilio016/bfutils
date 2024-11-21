@@ -1,0 +1,5 @@
+result/
+.cache/
+.direnv/
+.envrc
+test

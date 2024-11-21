@@ -50,6 +50,7 @@
             buildInputs = with pkgs; [
               valgrind
               clang-tools
+              bear
             ];
           };
         }

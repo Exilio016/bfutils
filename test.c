@@ -27,7 +27,16 @@ int main(int argc, char **argv) {
     string_push(new, builder);
     printf("Length: %d\tCapacity: %d\n", (int) vector_length(new), (int) vector_capacity(new));
 
+    char *source = "Hello, world, foo, bar, bazz";
+    char **list = string_split(source, ", ");
+    printf("Splitted into %d chunks\n", (int) vector_length(list));
+    for (int i =0; i < vector_length(list); i++) {
+        printf("%s\n", list[i]);
+        vector_free(list[i]);
+    }
+
     vector_free(builder);
     vector_free(new);
+    vector_free(list);
     return 0;
 }

@@ -37,9 +37,15 @@ USAGE:
 
         string_push:
             void string_push(char *, const char*); Appends to the end of a char* vector another char* vector.
+            It inserts a NULL byte at the end without incrementing the length.
 
         string_push_cstr:
-            void string_push_cstr(char *, const char*); Appends to the end of a char* vector a null terminated string.
+            void string_push_cstr(char *, const char*); Appends to the end of a char* vector a null terminated string. 
+            It inserts a NULL byte at the end without incrementing the length.
+
+        string_split:
+            char **string_split(const char *, const char*); Splits a NULL terminated string by a delimiter. Returns a vector of NULL terminated strings.
+            The returned vector needs to be free by calling vector_free on each element and itself.
     
     Compile-time options:
         
@@ -95,6 +101,7 @@ LICENSE:
 #define vector_free bfutils_vector_free
 #define string_push bfutils_string_push_str
 #define string_push_cstr bfutils_string_push_cstr
+#define string_split bfutils_string_split
 
 #endif //BFUTILS_VECTOR_NO_SHORT_NAME
 
@@ -132,6 +139,7 @@ extern void *bfutils_vector_grow(void *vector, size_t element_size, size_t lengt
 extern void *bfutils_vector_capacity_grow(void *vector, size_t element_size, size_t capacity);
 extern char* bfutils_string_push_cstr_f(char *str, const char *cstr);
 extern char* bfutils_string_push_str_f(char *str, const char *s);
+extern char** bfutils_string_split(const char *cstr, const char *delim);
 
 #endif // VECTOR_H
 #ifdef BFUTILS_VECTOR_IMPLEMENTATION
@@ -162,17 +170,40 @@ void *bfutils_vector_capacity_grow(void *vector, size_t element_size, size_t cap
 char *bfutils_string_push_cstr_f(char *str, const char *cstr) {
     if (cstr == NULL) 
         return str;
+    bfutils_vector_ensure_capacity(str, vector_length(str) + strlen(cstr) + 1);
     for (int i = 0; i < strlen(cstr); i++) {
         bfutils_vector_push(str, cstr[i]);
     }
+    str[bfutils_vector_length(str)] = '\0'; //Inserts \0 without incrementing length
     return str;
 }
 
 char *bfutils_string_push_str_f(char *str, const char *s) {
+    bfutils_vector_ensure_capacity(str, vector_length(str) + vector_length(s) + 1);
     for (int i = 0; i < bfutils_vector_length(s); i++) {
         bfutils_vector_push(str, s[i]);
     }
+    str[bfutils_vector_length(str)] = '\0'; //Inserts \0 without incrementing length
     return str;
+}
+
+char **bfutils_string_split(const char *cstr, const char *delim) {
+    char **list = NULL;
+    char *saveptr = NULL;
+    
+    char *new_str = NULL;
+    bfutils_string_push_cstr(new_str, cstr);
+
+    char *res = strtok_r(new_str, delim, &saveptr);
+    while (res != NULL) {
+        char *t = NULL;
+        bfutils_string_push_cstr(t, res);
+        vector_push(list, t);
+        res = strtok_r(NULL, delim, &saveptr);
+    }
+
+    vector_free(new_str);
+    return list;
 }
 
 #endif //BFUTILS_VECTOR_IMPLEMENTATION

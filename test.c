@@ -22,10 +22,10 @@ int main(int argc, char **argv) {
 
     char *builder = NULL;
     string_push_cstr(builder, "Test");
-    printf("Length: %d\tCapacity: %d\n", (int) vector_length(builder), (int) vector_capacity(builder));
+    printf("Length: %d\tCapacity: %d - %s\n", (int) vector_length(builder), (int) vector_capacity(builder), builder);
     char *new = NULL;
     string_push(new, builder);
-    printf("Length: %d\tCapacity: %d\n", (int) vector_length(new), (int) vector_capacity(new));
+    printf("Length: %d\tCapacity: %d - %s\n", (int) vector_length(new), (int) vector_capacity(new), new);
 
     char *source = "Hello, world, foo, bar, bazz";
     char **list = string_split(source, ", ");

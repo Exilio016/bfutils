@@ -51,6 +51,7 @@
               valgrind
               clang-tools
               bear
+              gdb
             ];
           };
         }

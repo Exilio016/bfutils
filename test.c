@@ -1,8 +1,53 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
 #define BFUTILS_VECTOR_IMPLEMENTATION
 #include "bfutils_vector.h"
+#define BFUTILS_HASH_IMPLEMENTATION
+#include "bfutils_hash.h"
 
+typedef struct {
+    int key;
+    int value;
+} IntNode;
+
+typedef struct {
+    char *key;
+    int value;
+} Node;
+
+void test_hash() {
+    IntNode *hashmap = NULL;
+    for(int i = 0 ; i < 200; i++) {
+        hash_push(hashmap, i, i*5);
+        if (i == 96) {
+            assert(96 * 5 == hash_remove(hashmap, i));
+        }
+    }
+    for(int i = 0 ; i < 200; i++) {
+        if (i == 96) {
+            assert(!hash_contains(hashmap, i));
+        }
+        else {
+            int val = hash_get(hashmap, i);
+            assert(val == (i*5));
+        }
+    }
+
+    Node *smap = NULL;
+    string_hash_push(smap, "Test", 10);
+    assert(10 == string_hash_get(smap, "Test"));
+    string_hash_push(smap, "Foo", 1);
+    string_hash_push(smap, "BAR", 2);
+    assert(1 == string_hash_get(smap, "Foo"));
+    string_hash_push(smap, "Foo", 3);
+    assert(2 == string_hash_get(smap, "BAR"));
+    assert(3 == string_hash_get(smap, "Foo"));
+    assert(3 == hash_header(smap)->insert_count);
+
+    hash_free(smap);
+    hash_free(hashmap);
+}
 
 int main(int argc, char **argv) {
     int *v = NULL;
@@ -34,6 +79,7 @@ int main(int argc, char **argv) {
         printf("%s\n", list[i]);
         vector_free(list[i]);
     }
+    test_hash();
 
     vector_free(builder);
     vector_free(new);

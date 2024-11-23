@@ -253,7 +253,7 @@ size_t bfutils_hash_insert_position(void *hm, const void *key, size_t element_si
         is_slot_occupied = bfutils_hash_slots(hm)[slot_array_index] & (1 << slot_index);
     }
     if (found_removed_slot) {
-        bfutils_hash_removed(hm)[removed_slot_index / 8] &= ~(1 << removed_slot_index % 8);
+        bfutils_hash_removed(hm)[removed_slot_index / 8] &= ~(1 << (removed_slot_index % 8));
         bfutils_hash_slots(hm)[removed_slot_index / 8] |= (1 << (removed_slot_index % 8));
     }
     else {

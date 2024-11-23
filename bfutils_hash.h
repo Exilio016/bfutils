@@ -106,6 +106,12 @@ LICENSE:
 #define string_hash_remove bfutils_string_hash_remove
 #define string_hash_contains bfutils_string_hash_contains
 #define hash_free bfutils_hash_free
+#define hash_iterator bfutils_hash_iterator
+#define hash_iterator_reverse bfutils_hash_iterator_reverse
+#define hash_iterator_next bfutils_hash_iterator_next
+#define hash_iterator_previous bfutils_hash_iterator_previous
+#define hash_iterator_has_next bfutils_hash_iterator_has_next
+#define hash_iterator_has_previous bfutils_hash_iterator_has_previous
 
 #endif //BFUTILS_HASH_NO_SHORT_NAME
 
@@ -134,6 +140,14 @@ typedef struct {
     unsigned char *removed;
 } BFUtilsHashHeader;
 
+typedef struct {
+    BFUtilsHashHeader *h;
+    size_t current;
+    size_t first;
+    size_t last;
+    int started;
+} BFUtilsHashIterator;
+
 #define bfutils_hash_header(h) ((h) ? (BFUtilsHashHeader *)(h) - 1 : NULL)
 #define bfutils_hash_insert_count(h) ((h) ? bfutils_hash_header((h))->insert_count : 0)
 #define bfutils_hash_length(h) ((h) ? bfutils_hash_header((h))->length : 0)
@@ -159,12 +173,22 @@ typedef struct {
 #define bfutils_string_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 1)].value)
 #define bfutils_hash_free(h) (bfutils_hash_free_f((h)), (h) = NULL)
 
+#define bfutils_hash_iterator_next(h, i) ((h)[bfutils_hash_iterator_next_position(i)])
+#define bfutils_hash_iterator_previous(h, i) ((h)[bfutils_hash_iterator_previous_position(i)])
+
 extern void *bfutils_hash_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string);
 extern size_t bfutils_hash_insert_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
 extern size_t bfutils_hash_function(const void* key, size_t key_size);
 extern long bfutils_hash_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
 extern long bfutils_hash_remove_key(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
 extern void bfutils_hash_free_f(void *hm);
+
+extern BFUtilsHashIterator bfutils_hash_iterator(void *hm);
+extern BFUtilsHashIterator bfutils_hash_iterator_reverse(void *hm);
+extern int bfutils_hash_iterator_has_next(BFUtilsHashIterator *it);
+extern int bfutils_hash_iterator_has_previous(BFUtilsHashIterator *it);
+extern size_t bfutils_hash_iterator_next_position(BFUtilsHashIterator *it);
+extern size_t bfutils_hash_iterator_previous_position(BFUtilsHashIterator *it);
 
 #endif // HASH_H
 #ifdef BFUTILS_HASH_IMPLEMENTATION
@@ -316,5 +340,106 @@ size_t bfutils_hash_function(const void* key, size_t key_size) { //SDBM hash fun
     }
 
     return hash;
+}
+
+BFUtilsHashIterator bfutils_hash_iterator(void *hm) {
+    unsigned char *slots = bfutils_hash_slots(hm);
+    unsigned char *removed = bfutils_hash_removed(hm);
+    size_t first = 0;
+    size_t last = 0;
+    int first_set = 0;
+    for(int i = 0; i <= bfutils_hash_length(hm) / 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            int is_slot_occupied = slots[i] & (1 << j);
+            int is_removed = removed[i] & (1 << j);
+            if (is_slot_occupied && !is_removed) {
+                if (!first_set) {
+                    first = i*8 + j;
+                    first_set = 1;
+                }
+                last = i*8 + j;
+            }
+        }
+    }
+    return (BFUtilsHashIterator) {
+        .h = bfutils_hash_header(hm),
+        .current = first,
+        .first = first,
+        .last = last,
+    };
+}
+
+BFUtilsHashIterator bfutils_hash_iterator_reverse(void *hm) {
+    BFUtilsHashIterator it = bfutils_hash_iterator(hm);
+    it.started = 1;
+    return it;
+}
+
+int bfutils_hash_iterator_has_next(BFUtilsHashIterator *it) {
+    if (it->started == 0) {
+        return it->h->insert_count > 0;
+    }
+    return it->current < it->last;
+}
+int bfutils_hash_iterator_has_previous(BFUtilsHashIterator *it) {
+    if (it->started == 1) {
+        return it->h->insert_count > 0;
+    }
+    return it->current > it->first;
+}
+
+size_t bfutils_hash_iterator_next_position(BFUtilsHashIterator *it) {
+    size_t index = it->started == 0 ? it->first : it->current + 1;
+    size_t slot_index = index % 8;
+    size_t slot_array_index = index / 8;
+
+    unsigned char *slots = it->h->slots;
+    unsigned char *removed = it->h->removed;
+    while (index < it->last) {
+        int is_slot_occupied = slots[slot_array_index] & (1 << slot_index);
+        int is_slot_removed = removed[slot_array_index] & (1 << slot_index);
+        if (is_slot_occupied && !is_slot_removed) {
+            it->started = 2;
+            it->current = index;
+            return it->current;
+        }
+
+        slot_index++;
+        if (slot_index == 8){
+            slot_index = 0;
+            slot_array_index = (slot_array_index + 1) % it->h->length;
+        }
+        index = slot_array_index * 8 + slot_index;
+    }
+    it->current = it->last;
+    return it->current;
+}
+
+size_t bfutils_hash_iterator_previous_position(BFUtilsHashIterator *it) {
+    size_t index = it->started == 1 ? it->last : it->current - 1;
+    size_t slot_index = index % 8;
+    size_t slot_array_index = index / 8;
+
+    unsigned char *slots = it->h->slots;
+    unsigned char *removed = it->h->removed;
+    while (index > it->first) {
+        int is_slot_occupied = slots[slot_array_index] & (1 << slot_index);
+        int is_slot_removed = removed[slot_array_index] & (1 << slot_index);
+        if (is_slot_occupied && !is_slot_removed) {
+            it->started = 2;
+            it->current = index;
+            return it->current;
+        }
+
+        if (slot_index == 0){
+            slot_index = 7;
+            slot_array_index = (slot_array_index - 1) % it->h->length;
+        } else {
+            slot_index--;
+        }
+        index = slot_array_index * 8 + slot_index;
+    }
+    it->current = it->first;
+    return it->current;
 }
 #endif //BFUTILS_HASH_IMPLEMENTATION

@@ -45,6 +45,17 @@ void test_hash() {
     assert(3 == string_hash_get(smap, "Foo"));
     assert(3 == hash_header(smap)->insert_count);
 
+    BFUtilsHashIterator it = hash_iterator(smap);
+    while(hash_iterator_has_next(&it)) {
+        Node n = hash_iterator_next(smap, &it);
+        printf("%s = %d\n", n.key, n.value);
+    }
+    BFUtilsHashIterator itr = hash_iterator_reverse(smap);
+    while(hash_iterator_has_previous(&itr)) {
+        Node n = hash_iterator_previous(smap, &itr);
+        printf("%s = %d\n", n.key, n.value);
+    }
+
     hash_free(smap);
     hash_free(hashmap);
 }

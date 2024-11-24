@@ -3,7 +3,7 @@
 #include <stddef.h>
 #define BFUTILS_VECTOR_IMPLEMENTATION
 #include "bfutils_vector.h"
-#define BFUTILS_HASH_IMPLEMENTATION
+#define BFUTILS_HASHMAP_IMPLEMENTATION
 #include "bfutils_hash.h"
 
 typedef struct {
@@ -18,47 +18,48 @@ typedef struct {
 
 void test_hash() {
     IntNode *hashmap = NULL;
-    hash_push(hashmap, 8, 120);
+    hashmap_push(hashmap, 8, 120);
+    assert(120 == hashmap_get(hashmap, 8));
     for(int i = 0 ; i < 200; i++) {
-        hash_push(hashmap, i, i*5);
+        hashmap_push(hashmap, i, i*5);
         if (i == 96) {
-            assert(96 * 5 == hash_remove(hashmap, i));
+            assert(96 * 5 == hashmap_remove(hashmap, i));
         }
     }
     for(int i = 0 ; i < 200; i++) {
         if (i == 96) {
-            assert(!hash_contains(hashmap, i));
+            assert(!hashmap_contains(hashmap, i));
         }
         else {
-            int val = hash_get(hashmap, i);
+            int val = hashmap_get(hashmap, i);
             assert(val == (i*5));
         }
     }
 
     Node *smap = NULL;
-    string_hash_push(smap, "Test", 10);
-    assert(10 == string_hash_get(smap, "Test"));
-    string_hash_push(smap, "Foo", 1);
-    string_hash_push(smap, "BAR", 2);
-    assert(1 == string_hash_get(smap, "Foo"));
-    string_hash_push(smap, "Foo", 3);
-    assert(2 == string_hash_get(smap, "BAR"));
-    assert(3 == string_hash_get(smap, "Foo"));
-    assert(3 == hash_header(smap)->insert_count);
+    string_hashmap_push(smap, "Test", 10);
+    assert(10 == string_hashmap_get(smap, "Test"));
+    string_hashmap_push(smap, "Foo", 1);
+    string_hashmap_push(smap, "BAR", 2);
+    assert(1 == string_hashmap_get(smap, "Foo"));
+    string_hashmap_push(smap, "Foo", 3);
+    assert(2 == string_hashmap_get(smap, "BAR"));
+    assert(3 == string_hashmap_get(smap, "Foo"));
+    assert(3 == hashmap_header(smap)->insert_count);
 
-    BFUtilsHashIterator it = hash_iterator(smap);
-    while(hash_iterator_has_next(&it)) {
-        Node n = hash_iterator_next(smap, &it);
+    HashmapIterator it = hashmap_iterator(smap);
+    while(hashmap_iterator_has_next(&it)) {
+        Node n = hashmap_iterator_next(smap, &it);
         printf("%s = %d\n", n.key, n.value);
     }
-    BFUtilsHashIterator itr = hash_iterator_reverse(smap);
-    while(hash_iterator_has_previous(&itr)) {
-        Node n = hash_iterator_previous(smap, &itr);
+    HashmapIterator itr = hashmap_iterator_reverse(smap);
+    while(hashmap_iterator_has_previous(&itr)) {
+        Node n = hashmap_iterator_previous(smap, &itr);
         printf("%s = %d\n", n.key, n.value);
     }
 
-    hash_free(smap);
-    hash_free(hashmap);
+    hashmap_free(smap);
+    hashmap_free(hashmap);
 }
 
 int main(int argc, char **argv) {

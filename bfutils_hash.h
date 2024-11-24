@@ -7,7 +7,7 @@ DESCRIPTION:
 USAGE:
     
     In one source file put:
-        #define BFUTILS_HASH_IMPLEMENTATION
+        #define BFUTILS_HASHMAP_IMPLEMENTATION
         #include "bfutils_hash.h"
     
     Other source files should contain only the import line.
@@ -19,50 +19,50 @@ USAGE:
 
     Functions (macros):
 
-        hash_header:
-            BFUtilsHashHeader *hash_header(T*); Return a pointer to the hashmap header.
+        hashmap_header:
+            BFUtilsHashmapHeader *hashmap_header(T*); Return a pointer to the hashmap header.
 
-        hash_push:
-            void hash_push(T*, TK, TV); Inserts an element to the hashmap.
+        hashmap_push:
+            void hashmap_push(T*, TK, TV); Inserts an element to the hashmap.
 
-        hash_get:
-            TV hash_get(T*, TK); Returns an element value from the hashmap.
+        hashmap_get:
+            TV hashmap_get(T*, TK); Returns an element value from the hashmap.
 
-        hash_remove:
-            TV hash_remove(T*, TK); Removes and returns an element from the hashmap.
+        hashmap_remove:
+            TV hashmap_remove(T*, TK); Removes and returns an element from the hashmap.
 
-        hash_contains:
-            int hash_contains(T*, TK); Returns a non-zero value if the hashmap contains the TK key.
+        hashmap_contains:
+            int hashmap_contains(T*, TK); Returns a non-zero value if the hashmap contains the TK key.
 
-        string_hash_push:
-            void string_hash_push(T*, const char*, TV); Inserts an element to the hashmap.
+        string_hashmap_push:
+            void string_hashmap_push(T*, const char*, TV); Inserts an element to the hashmap.
 
-        string_hash_get: 
-            TV string_hash_get(T*, const char *); Returns an element value from the hashmap.
+        string_hashmap_get: 
+            TV string_hashmap_get(T*, const char *); Returns an element value from the hashmap.
 
-        string_hash_remove: 
-            TV string_hash_remove(T*, const char*); Removes and returns an element from the hashmap.
+        string_hashmap_remove: 
+            TV string_hashmap_remove(T*, const char*); Removes and returns an element from the hashmap.
 
-        string_hash_contains:
-            int hash_contains(T*, const char*); Returns a non-zero value if the hashmap contains the char* key.
+        string_hashmap_contains:
+            int hashmap_contains(T*, const char*); Returns a non-zero value if the hashmap contains the char* key.
 
-        hash_free:
-            void hash_free(T*); Frees the hashmap.
+        hashmap_free:
+            void hashmap_free(T*); Frees the hashmap.
 
     Compile-time options:
         
-        #define BFUTILS_HASH_NO_SHORT_NAME
+        #define BFUTILS_HASHMAP_NO_SHORT_NAME
         
             This flag needs to be set globally.
             By default this file exposes functions without bfutils_ prefix.
             By defining this flag, this library will expose only functions prefixed with bfutils_
 
-        #define BFUTILS_HASH_MALLOC another_malloc
-        #define BFUTILS_HASH_CALLOC another_calloc
-        #define BFUTILS_HASH_REALLOC another_realloc
-        #define BFUTILS_HASH_FREE another_free
+        #define BFUTILS_HASHMAP_MALLOC another_malloc
+        #define BFUTILS_HASHMAP_CALLOC another_calloc
+        #define BFUTILS_HASHMAP_REALLOC another_realloc
+        #define BFUTILS_HASHMAP_FREE another_free
 
-            These flags needs to be set only in the file containing #define BFUTILS_HASH_IMPLEMENTATION
+            These flags needs to be set only in the file containing #define BFUTILS_HASHMAP_IMPLEMENTATION
             If you don't want to use 'stdlib.h' memory functions you can define these flags with custom functions.
 
 LICENSE:
@@ -91,44 +91,8 @@ LICENSE:
 
 */
 
-#ifndef BFUTILS_HASH_H
-#define BFUTILS_HASH_H
-
-#ifndef BFUTILS_HASH_NO_SHORT_NAME
-
-#define hash_header bfutils_hash_header
-#define hash_push bfutils_hash_push
-#define hash_get bfutils_hash_get
-#define hash_remove bfutils_hash_remove
-#define hash_contains bfutils_hash_contains
-#define string_hash_push bfutils_string_hash_push
-#define string_hash_get bfutils_string_hash_get
-#define string_hash_remove bfutils_string_hash_remove
-#define string_hash_contains bfutils_string_hash_contains
-#define hash_free bfutils_hash_free
-#define hash_iterator bfutils_hash_iterator
-#define hash_iterator_reverse bfutils_hash_iterator_reverse
-#define hash_iterator_next bfutils_hash_iterator_next
-#define hash_iterator_previous bfutils_hash_iterator_previous
-#define hash_iterator_has_next bfutils_hash_iterator_has_next
-#define hash_iterator_has_previous bfutils_hash_iterator_has_previous
-
-#endif //BFUTILS_HASH_NO_SHORT_NAME
-
-#if ((defined(BFUTILS_HASH_REALLOC) && (!defined(BFUTILS_HASH_MALLOC) || !defined(BFUTILS_HASH_CALLOC) || !defined(BFUTILS_HASH_FREE))) \
-    || (defined(BFUTILS_HASH_MALLOC) && (!defined(BFUTILS_HASH_REALLOC) || !defined(BFUTILS_HASH_CALLOC) || !defined(BFUTILS_HASH_FREE))) \
-    || (defined(BFUTILS_HASH_CALLOC) && (!defined(BFUTILS_HASH_MALLOC) || !defined(BFUTILS_HASH_REALLOC) || !defined(BFUTILS_HASH_FREE))) \
-    || (defined(BFUTILS_HASH_FREE) && (!defined(BFUTILS_HASH_MALLOC) || !defined(BFUTILS_HASH_REALLOC) || !defined(BFUTILS_HASH_CALLOC))))
-#error "You must define all BFUTILS_HASH_REALLOC, BFUTILS_HASH_CALLOC, BFUTILS_HASH_MALLOC, BFUTILS_HASH_FREE or neither."
-#endif
-
-#ifndef BFUTILS_HASH_REALLOC
-#include <stdlib.h>
-#define BFUTILS_HASH_REALLOC realloc
-#define BFUTILS_HASH_CALLOC calloc
-#define BFUTILS_HASH_MALLOC malloc
-#define BFUTILS_HASH_FREE free
-#endif //BFUTILS_HASH_REALLOC
+#ifndef BFUTILS_HASHMAP_H
+#define BFUTILS_HASHMAP_H
 
 #include <stddef.h>
 #include <string.h>
@@ -138,78 +102,118 @@ typedef struct {
     size_t length;
     unsigned char *slots;
     unsigned char *removed;
-} BFUtilsHashHeader;
+} BFUtilsHashmapHeader;
 
 typedef struct {
-    BFUtilsHashHeader *h;
+    BFUtilsHashmapHeader *h;
     size_t current;
     size_t first;
     size_t last;
     int started;
-} BFUtilsHashIterator;
+} BFUtilsHashmapIterator;
 
-#define BFUTILS_HASH_ADDRESSOF(v) ((__typeof__(v)[1]){v})
 
-#define bfutils_hash_header(h) ((h) ? (BFUtilsHashHeader *)(h) - 1 : NULL)
-#define bfutils_hash_insert_count(h) ((h) ? bfutils_hash_header((h))->insert_count : 0)
-#define bfutils_hash_length(h) ((h) ? bfutils_hash_header((h))->length : 0)
-#define bfutils_hash_slots(h) ((h) ? bfutils_hash_header((h))->slots : NULL)
-#define bfutils_hash_removed(h) ((h) ? bfutils_hash_header((h))->removed : NULL)
-#define bfutils_hash_push(h, k, v) { \
-    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
-    size_t pos = bfutils_hash_insert_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
+#ifndef BFUTILS_HASHMAP_NO_SHORT_NAME
+
+#define hashmap_header bfutils_hashmap_header
+#define hashmap_push bfutils_hashmap_push
+#define hashmap_get bfutils_hashmap_get
+#define hashmap_remove bfutils_hashmap_remove
+#define hashmap_contains bfutils_hashmap_contains
+#define string_hashmap_push bfutils_string_hashmap_push
+#define string_hashmap_get bfutils_string_hashmap_get
+#define string_hashmap_remove bfutils_string_hashmap_remove
+#define string_hashmap_contains bfutils_string_hashmap_contains
+#define hashmap_free bfutils_hashmap_free
+#define hashmap_iterator bfutils_hashmap_iterator
+#define hashmap_iterator_reverse bfutils_hashmap_iterator_reverse
+#define hashmap_iterator_next bfutils_hashmap_iterator_next
+#define hashmap_iterator_previous bfutils_hashmap_iterator_previous
+#define hashmap_iterator_has_next bfutils_hashmap_iterator_has_next
+#define hashmap_iterator_has_previous bfutils_hashmap_iterator_has_previous
+
+typedef BFUtilsHashmapHeader HashmapHeader; 
+typedef BFUtilsHashmapIterator HashmapIterator; 
+
+#endif //BFUTILS_HASHMAP_NO_SHORT_NAME
+
+#if ((defined(BFUTILS_HASHMAP_REALLOC) && (!defined(BFUTILS_HASHMAP_MALLOC) || !defined(BFUTILS_HASHMAP_CALLOC) || !defined(BFUTILS_HASHMAP_FREE))) \
+    || (defined(BFUTILS_HASHMAP_MALLOC) && (!defined(BFUTILS_HASHMAP_REALLOC) || !defined(BFUTILS_HASHMAP_CALLOC) || !defined(BFUTILS_HASHMAP_FREE))) \
+    || (defined(BFUTILS_HASHMAP_CALLOC) && (!defined(BFUTILS_HASHMAP_MALLOC) || !defined(BFUTILS_HASHMAP_REALLOC) || !defined(BFUTILS_HASHMAP_FREE))) \
+    || (defined(BFUTILS_HASHMAP_FREE) && (!defined(BFUTILS_HASHMAP_MALLOC) || !defined(BFUTILS_HASHMAP_REALLOC) || !defined(BFUTILS_HASHMAP_CALLOC))))
+#error "You must define all BFUTILS_HASHMAP_REALLOC, BFUTILS_HASHMAP_CALLOC, BFUTILS_HASHMAP_MALLOC, BFUTILS_HASHMAP_FREE or neither."
+#endif
+
+#ifndef BFUTILS_HASHMAP_REALLOC
+#include <stdlib.h>
+#define BFUTILS_HASHMAP_REALLOC realloc
+#define BFUTILS_HASHMAP_CALLOC calloc
+#define BFUTILS_HASHMAP_MALLOC malloc
+#define BFUTILS_HASHMAP_FREE free
+#endif //BFUTILS_HASHMAP_REALLOC
+
+#define BFUTILS_HASHMAP_ADDRESSOF(v) ((__typeof__(v)[1]){v})
+
+#define bfutils_hashmap_header(h) ((h) ? (BFUtilsHashmapHeader *)(h) - 1 : NULL)
+#define bfutils_hashmap_insert_count(h) ((h) ? bfutils_hashmap_header((h))->insert_count : 0)
+#define bfutils_hashmap_length(h) ((h) ? bfutils_hashmap_header((h))->length : 0)
+#define bfutils_hashmap_slots(h) ((h) ? bfutils_hashmap_header((h))->slots : NULL)
+#define bfutils_hashmap_removed(h) ((h) ? bfutils_hashmap_header((h))->removed : NULL)
+#define bfutils_hashmap_push(h, k, v) { \
+    (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
+    size_t pos = bfutils_hashmap_insert_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
     (h)[pos].key = (k); \
     (h)[pos].value = (v); \
 }
-#define bfutils_hash_get(h, k) ((h)[bfutils_hash_get_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
-#define bfutils_hash_contains(h, k) (bfutils_hash_get_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
-#define bfutils_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
-#define bfutils_string_hash_push(h, k, v) { \
-    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
-    size_t pos = bfutils_hash_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
+#define bfutils_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
+#define bfutils_hashmap_remove(h, k) ((h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_string_hashmap_push(h, k, v) { \
+    (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
+    size_t pos = bfutils_hashmap_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
     (h)[pos].key = (k); \
     (h)[pos].value = (v); \
 }
-#define bfutils_string_hash_get(h, k) ((h)[bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
-#define bfutils_string_hash_contains(h, k) (bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)
-#define bfutils_string_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
-#define bfutils_hash_free(h) (bfutils_hash_free_f((h)), (h) = NULL)
+#define bfutils_string_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
+#define bfutils_string_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)
+#define bfutils_string_hashmap_remove(h, k) ((h)[bfutils_hashmap_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
+#define bfutils_hashmap_free(h) (bfutils_hashmap_free_f((h)), (h) = NULL)
 
-#define bfutils_hash_iterator_next(h, i) ((h)[bfutils_hash_iterator_next_position(i)])
-#define bfutils_hash_iterator_previous(h, i) ((h)[bfutils_hash_iterator_previous_position(i)])
+#define bfutils_hashmap_iterator_next(h, i) ((h)[bfutils_hashmap_iterator_next_position(i)])
+#define bfutils_hashmap_iterator_previous(h, i) ((h)[bfutils_hashmap_iterator_previous_position(i)])
 
-extern void *bfutils_hash_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string);
-extern size_t bfutils_hash_insert_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
-extern size_t bfutils_hash_function(const void* key, size_t key_size);
-extern long bfutils_hash_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
-extern long bfutils_hash_remove_key(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
-extern void bfutils_hash_free_f(void *hm);
+extern void *bfutils_hashmap_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string);
+extern size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
+extern size_t bfutils_hashmap_function(const void* key, size_t key_size);
+extern long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
+extern long bfutils_hashmap_remove_key(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string);
+extern void bfutils_hashmap_free_f(void *hm);
 
-extern BFUtilsHashIterator bfutils_hash_iterator(void *hm);
-extern BFUtilsHashIterator bfutils_hash_iterator_reverse(void *hm);
-extern int bfutils_hash_iterator_has_next(BFUtilsHashIterator *it);
-extern int bfutils_hash_iterator_has_previous(BFUtilsHashIterator *it);
-extern size_t bfutils_hash_iterator_next_position(BFUtilsHashIterator *it);
-extern size_t bfutils_hash_iterator_previous_position(BFUtilsHashIterator *it);
+extern BFUtilsHashmapIterator bfutils_hashmap_iterator(void *hm);
+extern BFUtilsHashmapIterator bfutils_hashmap_iterator_reverse(void *hm);
+extern int bfutils_hashmap_iterator_has_next(BFUtilsHashmapIterator *it);
+extern int bfutils_hashmap_iterator_has_previous(BFUtilsHashmapIterator *it);
+extern size_t bfutils_hashmap_iterator_next_position(BFUtilsHashmapIterator *it);
+extern size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator *it);
 
-#endif // HASH_H
-#ifdef BFUTILS_HASH_IMPLEMENTATION
+#endif // HASHMAP_H
+#ifdef BFUTILS_HASHMAP_IMPLEMENTATION
 
-void *bfutils_hash_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
-    if (bfutils_hash_length(hm) == 0 || bfutils_hash_insert_count(hm) / (double) bfutils_hash_length(hm) > 0.5) {
-        size_t old_length = bfutils_hash_length(hm);
-        size_t length = bfutils_hash_length(hm) > 0 ? bfutils_hash_length(hm) * 2 : 128;
-        unsigned char *slots = bfutils_hash_slots(hm);
-        unsigned char *removed = bfutils_hash_removed(hm);
+void *bfutils_hashmap_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
+    if (bfutils_hashmap_length(hm) == 0 || bfutils_hashmap_insert_count(hm) / (double) bfutils_hashmap_length(hm) > 0.5) {
+        size_t old_length = bfutils_hashmap_length(hm);
+        size_t length = bfutils_hashmap_length(hm) > 0 ? bfutils_hashmap_length(hm) * 2 : 128;
+        unsigned char *slots = bfutils_hashmap_slots(hm);
+        unsigned char *removed = bfutils_hashmap_removed(hm);
         unsigned char *old_data = NULL;
         if (old_length > 0) {
-            old_data = BFUTILS_HASH_MALLOC(element_size * old_length);
+            old_data = BFUTILS_HASHMAP_MALLOC(element_size * old_length);
             memcpy(old_data, hm, element_size * old_length);
         }
 
-        BFUtilsHashHeader *header = BFUTILS_HASH_REALLOC(bfutils_hash_header(hm), sizeof(BFUtilsHashHeader) + element_size * length);
-        header->slots = BFUTILS_HASH_CALLOC(1, length / 8 + 1);
-        header->removed = BFUTILS_HASH_CALLOC(1, length / 8 + 1);
+        BFUtilsHashmapHeader *header = BFUTILS_HASHMAP_REALLOC(bfutils_hashmap_header(hm), sizeof(BFUtilsHashmapHeader) + element_size * length);
+        header->slots = BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
+        header->removed = BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
         header->length = length;
         header->insert_count = 0;
         hm = (void*) (header + 1);
@@ -221,7 +225,7 @@ void *bfutils_hash_resize(void *hm, size_t element_size, size_t key_offset, size
                     int is_removed = removed[i] & (1 << j);
                     if (is_slot_occupied && !is_removed) {
                         void * key = old_data + ((i*8+j) * element_size) + key_offset;
-                        size_t pos = bfutils_hash_insert_position(hm, key, element_size, key_offset, key_size, is_string);
+                        size_t pos = bfutils_hashmap_insert_position(hm, key, element_size, key_offset, key_size, is_string);
                         void *element = (unsigned char*)hm + (pos * element_size);
                         void *source = old_data + ((i*8+j) * element_size);
                         memcpy(element, source, element_size);
@@ -231,13 +235,13 @@ void *bfutils_hash_resize(void *hm, size_t element_size, size_t key_offset, size
         }
 
         if(slots) {
-            BFUTILS_HASH_FREE(slots);
+            BFUTILS_HASHMAP_FREE(slots);
         }
         if(old_data) {
-            BFUTILS_HASH_FREE(old_data);
+            BFUTILS_HASHMAP_FREE(old_data);
         }
         if(removed) {
-            BFUTILS_HASH_FREE(removed);
+            BFUTILS_HASHMAP_FREE(removed);
         }
     }
     return hm;
@@ -250,17 +254,17 @@ int keycmp(const void *keya, const void *keyb, size_t key_size, int is_string) {
     return memcmp(keya, keyb, key_size);
 }
 
-size_t bfutils_hash_insert_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
-    size_t hash = is_string ? bfutils_hash_function(key, strlen(key)) : bfutils_hash_function(key, key_size);
-    size_t index = hash % bfutils_hash_length(hm);
+size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
+    size_t hash = is_string ? bfutils_hashmap_function(key, strlen(key)) : bfutils_hashmap_function(key, key_size);
+    size_t index = hash % bfutils_hashmap_length(hm);
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
 
-    int is_slot_occupied = bfutils_hash_slots(hm)[slot_array_index] & (1 << slot_index);
+    int is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     int found_removed_slot = 0;
     size_t removed_slot_index = 0;
     while (is_slot_occupied) {
-        int is_slot_removed = bfutils_hash_removed(hm)[slot_array_index] & (1 << slot_index);
+        int is_slot_removed = bfutils_hashmap_removed(hm)[slot_array_index] & (1 << slot_index);
         if (is_slot_removed && !found_removed_slot) {
             found_removed_slot = 1;
             removed_slot_index = slot_array_index * 8 + slot_index;
@@ -274,30 +278,30 @@ size_t bfutils_hash_insert_position(void *hm, const void *key, size_t element_si
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;
-            slot_array_index = (slot_array_index + 1) % bfutils_hash_length(hm);
+            slot_array_index = (slot_array_index + 1) % bfutils_hashmap_length(hm);
         }
-        is_slot_occupied = bfutils_hash_slots(hm)[slot_array_index] & (1 << slot_index);
+        is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     }
     if (found_removed_slot) {
-        bfutils_hash_removed(hm)[removed_slot_index / 8] &= ~(1 << (removed_slot_index % 8));
-        bfutils_hash_slots(hm)[removed_slot_index / 8] |= (1 << (removed_slot_index % 8));
+        bfutils_hashmap_removed(hm)[removed_slot_index / 8] &= ~(1 << (removed_slot_index % 8));
+        bfutils_hashmap_slots(hm)[removed_slot_index / 8] |= (1 << (removed_slot_index % 8));
     }
     else {
-        bfutils_hash_slots(hm)[slot_array_index] |= (1 << slot_index);
+        bfutils_hashmap_slots(hm)[slot_array_index] |= (1 << slot_index);
     }
-    bfutils_hash_header(hm)->insert_count++;
+    bfutils_hashmap_header(hm)->insert_count++;
     return slot_array_index * 8 + slot_index;
 }
 
-long bfutils_hash_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
-    size_t hash = is_string ? bfutils_hash_function(key, strlen(key)) : bfutils_hash_function(key, key_size);
-    size_t index = hash % bfutils_hash_length(hm);
+long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
+    size_t hash = is_string ? bfutils_hashmap_function(key, strlen(key)) : bfutils_hashmap_function(key, key_size);
+    size_t index = hash % bfutils_hashmap_length(hm);
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
 
-    int is_slot_occupied = bfutils_hash_slots(hm)[slot_array_index] & (1 << slot_index);
+    int is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     while (is_slot_occupied) {
-        int is_slot_removed = bfutils_hash_removed(hm)[slot_array_index] & (1 << slot_index);
+        int is_slot_removed = bfutils_hashmap_removed(hm)[slot_array_index] & (1 << slot_index);
         if (!is_slot_removed) {
             void *src = (unsigned char*) hm + (index * element_size) + key_offset;
             if (0 == keycmp(key, src, key_size, is_string)) {
@@ -309,31 +313,31 @@ long bfutils_hash_get_position(void *hm, const void *key, size_t element_size, s
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;
-            slot_array_index = (slot_array_index + 1) % bfutils_hash_length(hm);
+            slot_array_index = (slot_array_index + 1) % bfutils_hashmap_length(hm);
         }
-        is_slot_occupied = bfutils_hash_slots(hm)[slot_array_index] & (1 << slot_index);
+        is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     }
     return -1;
 }
 
-void bfutils_hash_free_f(void *hm) {
-    BFUTILS_HASH_FREE(bfutils_hash_header(hm)->slots);
-    BFUTILS_HASH_FREE(bfutils_hash_header(hm)->removed);
-    BFUTILS_HASH_FREE(bfutils_hash_header(hm));
+void bfutils_hashmap_free_f(void *hm) {
+    BFUTILS_HASHMAP_FREE(bfutils_hashmap_header(hm)->slots);
+    BFUTILS_HASHMAP_FREE(bfutils_hashmap_header(hm)->removed);
+    BFUTILS_HASHMAP_FREE(bfutils_hashmap_header(hm));
 }
 
-long bfutils_hash_remove_key(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
-    long index = bfutils_hash_get_position(hm, key, element_size, key_offset, key_size, is_string);
+long bfutils_hashmap_remove_key(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
+    long index = bfutils_hashmap_get_position(hm, key, element_size, key_offset, key_size, is_string);
     if (index > 0) {
         size_t slot_index = index % 8;
         size_t slot_array_index = index / 8;
-        bfutils_hash_removed(hm)[slot_array_index] |= (1 << slot_index);
-        bfutils_hash_header(hm)->length--;
+        bfutils_hashmap_removed(hm)[slot_array_index] |= (1 << slot_index);
+        bfutils_hashmap_header(hm)->length--;
     }
     return index;
 }
 
-size_t bfutils_hash_function(const void* key, size_t key_size) { //SDBM hash function
+size_t bfutils_hashmap_function(const void* key, size_t key_size) { //SDBM hash function
     unsigned char *str = (unsigned char *) key;
     size_t hash = 0;
 
@@ -344,13 +348,13 @@ size_t bfutils_hash_function(const void* key, size_t key_size) { //SDBM hash fun
     return hash;
 }
 
-BFUtilsHashIterator bfutils_hash_iterator(void *hm) {
-    unsigned char *slots = bfutils_hash_slots(hm);
-    unsigned char *removed = bfutils_hash_removed(hm);
+BFUtilsHashmapIterator bfutils_hashmap_iterator(void *hm) {
+    unsigned char *slots = bfutils_hashmap_slots(hm);
+    unsigned char *removed = bfutils_hashmap_removed(hm);
     size_t first = 0;
     size_t last = 0;
     int first_set = 0;
-    for(int i = 0; i <= bfutils_hash_length(hm) / 8; i++) {
+    for(int i = 0; i <= bfutils_hashmap_length(hm) / 8; i++) {
         for (int j = 0; j < 8; j++) {
             int is_slot_occupied = slots[i] & (1 << j);
             int is_removed = removed[i] & (1 << j);
@@ -363,34 +367,34 @@ BFUtilsHashIterator bfutils_hash_iterator(void *hm) {
             }
         }
     }
-    return (BFUtilsHashIterator) {
-        .h = bfutils_hash_header(hm),
+    return (BFUtilsHashmapIterator) {
+        .h = bfutils_hashmap_header(hm),
         .current = first,
         .first = first,
         .last = last,
     };
 }
 
-BFUtilsHashIterator bfutils_hash_iterator_reverse(void *hm) {
-    BFUtilsHashIterator it = bfutils_hash_iterator(hm);
+BFUtilsHashmapIterator bfutils_hashmap_iterator_reverse(void *hm) {
+    BFUtilsHashmapIterator it = bfutils_hashmap_iterator(hm);
     it.started = 1;
     return it;
 }
 
-int bfutils_hash_iterator_has_next(BFUtilsHashIterator *it) {
+int bfutils_hashmap_iterator_has_next(BFUtilsHashmapIterator *it) {
     if (it->started == 0) {
         return it->h->insert_count > 0;
     }
     return it->current < it->last;
 }
-int bfutils_hash_iterator_has_previous(BFUtilsHashIterator *it) {
+int bfutils_hashmap_iterator_has_previous(BFUtilsHashmapIterator *it) {
     if (it->started == 1) {
         return it->h->insert_count > 0;
     }
     return it->current > it->first;
 }
 
-size_t bfutils_hash_iterator_next_position(BFUtilsHashIterator *it) {
+size_t bfutils_hashmap_iterator_next_position(BFUtilsHashmapIterator *it) {
     size_t index = it->started == 0 ? it->first : it->current + 1;
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
@@ -417,7 +421,7 @@ size_t bfutils_hash_iterator_next_position(BFUtilsHashIterator *it) {
     return it->current;
 }
 
-size_t bfutils_hash_iterator_previous_position(BFUtilsHashIterator *it) {
+size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator *it) {
     size_t index = it->started == 1 ? it->last : it->current - 1;
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
@@ -444,4 +448,4 @@ size_t bfutils_hash_iterator_previous_position(BFUtilsHashIterator *it) {
     it->current = it->first;
     return it->current;
 }
-#endif //BFUTILS_HASH_IMPLEMENTATION
+#endif //BFUTILS_HASHMAP_IMPLEMENTATION

@@ -259,6 +259,7 @@ size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element
     size_t index = hash % bfutils_hashmap_length(hm);
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
+    size_t last_array_index = bfutils_hashmap_length(hm) / 8;
 
     int is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     int found_removed_slot = 0;
@@ -278,7 +279,7 @@ size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;
-            slot_array_index = (slot_array_index + 1) % bfutils_hashmap_length(hm);
+            slot_array_index = (slot_array_index + 1) % (last_array_index);
         }
         is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     }
@@ -298,6 +299,7 @@ long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size
     size_t index = hash % bfutils_hashmap_length(hm);
     size_t slot_index = index % 8;
     size_t slot_array_index = index / 8;
+    size_t last_array_index = bfutils_hashmap_length(hm) / 8;
 
     int is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     while (is_slot_occupied) {
@@ -313,7 +315,7 @@ long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;
-            slot_array_index = (slot_array_index + 1) % bfutils_hashmap_length(hm);
+            slot_array_index = (slot_array_index + 1) % last_array_index;
         }
         is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     }

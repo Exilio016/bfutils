@@ -332,7 +332,7 @@ long bfutils_hashmap_remove_key(void *hm, const void *key, size_t element_size, 
         size_t slot_index = index % 8;
         size_t slot_array_index = index / 8;
         bfutils_hashmap_removed(hm)[slot_array_index] |= (1 << slot_index);
-        bfutils_hashmap_header(hm)->length--;
+        bfutils_hashmap_header(hm)->insert_count--;
     }
     return index;
 }

@@ -148,29 +148,31 @@ typedef struct {
     int started;
 } BFUtilsHashIterator;
 
+#define BFUTILS_HASH_ADDRESSOF(v) ((__typeof__(v)[1]){v})
+
 #define bfutils_hash_header(h) ((h) ? (BFUtilsHashHeader *)(h) - 1 : NULL)
 #define bfutils_hash_insert_count(h) ((h) ? bfutils_hash_header((h))->insert_count : 0)
 #define bfutils_hash_length(h) ((h) ? bfutils_hash_header((h))->length : 0)
 #define bfutils_hash_slots(h) ((h) ? bfutils_hash_header((h))->slots : NULL)
 #define bfutils_hash_removed(h) ((h) ? bfutils_hash_header((h))->removed : NULL)
 #define bfutils_hash_push(h, k, v) { \
-    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((k)), 0); \
-    size_t pos = bfutils_hash_insert_position((h), &(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 0); \
+    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
+    size_t pos = bfutils_hash_insert_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
     (h)[pos].key = (k); \
     (h)[pos].value = (v); \
 }
-#define bfutils_hash_get(h, k) ((h)[bfutils_hash_get_position((h), &(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 0)].value)
-#define bfutils_hash_contains(h, k) (bfutils_hash_get_position((h), &(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 0) > 0)
-#define bfutils_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), &(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 0)].value)
+#define bfutils_hash_get(h, k) ((h)[bfutils_hash_get_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_hash_contains(h, k) (bfutils_hash_get_position((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
+#define bfutils_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), BFUTILS_HASH_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_string_hash_push(h, k, v) { \
-    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((k)), 1); \
-    size_t pos = bfutils_hash_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 1); \
+    (h) = bfutils_hash_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
+    size_t pos = bfutils_hash_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
     (h)[pos].key = (k); \
     (h)[pos].value = (v); \
 }
-#define bfutils_string_hash_get(h, k) ((h)[bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 1)].value)
-#define bfutils_string_hash_contains(h, k) (bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 1) > 0)
-#define bfutils_string_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((k)), 1)].value)
+#define bfutils_string_hash_get(h, k) ((h)[bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
+#define bfutils_string_hash_contains(h, k) (bfutils_hash_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)
+#define bfutils_string_hash_remove(h, k) ((h)[bfutils_hash_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
 #define bfutils_hash_free(h) (bfutils_hash_free_f((h)), (h) = NULL)
 
 #define bfutils_hash_iterator_next(h, i) ((h)[bfutils_hash_iterator_next_position(i)])

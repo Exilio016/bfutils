@@ -18,6 +18,7 @@ typedef struct {
 
 void test_hash() {
     IntNode *hashmap = NULL;
+    hash_push(hashmap, 8, 120);
     for(int i = 0 ; i < 200; i++) {
         hash_push(hashmap, i, i*5);
         if (i == 96) {

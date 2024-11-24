@@ -167,7 +167,8 @@ typedef BFUtilsHashmapIterator HashmapIterator;
 }
 #define bfutils_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
-#define bfutils_hashmap_remove(h, k) ((h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_hashmap_remove(h, k) ((h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0),\
+    (h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_string_hashmap_push(h, k, v) { \
     (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
     size_t pos = bfutils_hashmap_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
@@ -176,7 +177,8 @@ typedef BFUtilsHashmapIterator HashmapIterator;
 }
 #define bfutils_string_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
 #define bfutils_string_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)
-#define bfutils_string_hashmap_remove(h, k) ((h)[bfutils_hashmap_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
+#define bfutils_string_hashmap_remove(h, k) ((h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1) ,\
+    (h)[bfutils_hashmap_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
 #define bfutils_hashmap_free(h) (bfutils_hashmap_free_f((h)), (h) = NULL)
 
 #define bfutils_hashmap_iterator_next(h, i) ((h)[bfutils_hashmap_iterator_next_position(i)])
@@ -200,49 +202,55 @@ extern size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator 
 #ifdef BFUTILS_HASHMAP_IMPLEMENTATION
 
 void *bfutils_hashmap_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
-    if (bfutils_hashmap_length(hm) == 0 || bfutils_hashmap_insert_count(hm) / (double) bfutils_hashmap_length(hm) > 0.5) {
-        size_t old_length = bfutils_hashmap_length(hm);
-        size_t length = bfutils_hashmap_length(hm) > 0 ? bfutils_hashmap_length(hm) * 2 : 128;
-        unsigned char *slots = bfutils_hashmap_slots(hm);
-        unsigned char *removed = bfutils_hashmap_removed(hm);
-        unsigned char *old_data = NULL;
-        if (old_length > 0) {
-            old_data = BFUTILS_HASHMAP_MALLOC(element_size * old_length);
-            memcpy(old_data, hm, element_size * old_length);
-        }
+    int need_to_grow = bfutils_hashmap_length(hm) == 0 || bfutils_hashmap_insert_count(hm) / (double) bfutils_hashmap_length(hm) > 0.5;
+    int need_to_shrink = bfutils_hashmap_length(hm) > 32 && bfutils_hashmap_insert_count(hm) / (double) bfutils_hashmap_length(hm) < 0.25;
+    if (!need_to_grow && !need_to_shrink) {
+        return hm;
+    }
+    size_t old_length = bfutils_hashmap_length(hm);
+    size_t length = bfutils_hashmap_length(hm) > 0 ? bfutils_hashmap_length(hm) * 2 : 32;
+    if (need_to_shrink) {
+        length = bfutils_hashmap_length(hm) / 2;
+    }
+    unsigned char *slots = bfutils_hashmap_slots(hm);
+    unsigned char *removed = bfutils_hashmap_removed(hm);
+    unsigned char *old_data = NULL;
+    if (old_length > 0) {
+        old_data = (unsigned char*) BFUTILS_HASHMAP_MALLOC(element_size * old_length);
+        memcpy(old_data, hm, element_size * old_length);
+    }
 
-        BFUtilsHashmapHeader *header = BFUTILS_HASHMAP_REALLOC(bfutils_hashmap_header(hm), sizeof(BFUtilsHashmapHeader) + element_size * length);
-        header->slots = BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
-        header->removed = BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
-        header->length = length;
-        header->insert_count = 0;
-        hm = (void*) (header + 1);
+    BFUtilsHashmapHeader *header = (BFUtilsHashmapHeader*) BFUTILS_HASHMAP_REALLOC(bfutils_hashmap_header(hm), sizeof(BFUtilsHashmapHeader) + (element_size * length));
+    header->slots = (unsigned char*) BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
+    header->removed = (unsigned char*) BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
+    header->length = length;
+    header->insert_count = 0;
+    hm = (void*) (header + 1);
 
-        if (old_length > 0) {
-            for(int i = 0; i <= old_length / 8; i++) {
-                for (int j = 0; j < 8; j++) {
-                    int is_slot_occupied = slots[i] & (1 << j);
-                    int is_removed = removed[i] & (1 << j);
-                    if (is_slot_occupied && !is_removed) {
-                        void * key = old_data + ((i*8+j) * element_size) + key_offset;
-                        size_t pos = bfutils_hashmap_insert_position(hm, key, element_size, key_offset, key_size, is_string);
-                        void *element = (unsigned char*)hm + (pos * element_size);
-                        void *source = old_data + ((i*8+j) * element_size);
-                        memcpy(element, source, element_size);
-                    }
+    if (old_length > 0) {
+        for(int i = 0; i <= old_length / 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                int is_slot_occupied = slots[i] & (1 << j);
+                int is_removed = removed[i] & (1 << j);
+                if (is_slot_occupied && !is_removed) {
+                    void * key = old_data + ((i*8+j) * element_size) + key_offset;
+                    size_t pos = bfutils_hashmap_insert_position(hm, key, element_size, key_offset, key_size, is_string);
+                    void *element = (unsigned char*)hm + (pos * element_size);
+                    void *source = old_data + ((i*8+j) * element_size);
+                    memcpy(element, source, element_size);
                 }
             }
         }
+    }
 
-        if(slots) {
-            BFUTILS_HASHMAP_FREE(slots);
-        }
-        if(old_data) {
-            BFUTILS_HASHMAP_FREE(old_data);
-        }
-        if(removed) {
-            BFUTILS_HASHMAP_FREE(removed);
-        }
+    if(slots) {
+        BFUTILS_HASHMAP_FREE(slots);
+    }
+    if(old_data) {
+        BFUTILS_HASHMAP_FREE(old_data);
+    }
+    if(removed) {
+        BFUTILS_HASHMAP_FREE(removed);
     }
     return hm;
 }

@@ -35,6 +35,15 @@ void test_hash() {
             assert(val == (i*5));
         }
     }
+    for (int i = 10; i < 200; i++) {
+        hashmap_remove(hashmap, i);
+    }
+    HashmapIterator it = hashmap_iterator(hashmap);
+    while(hashmap_iterator_has_next(&it)) {
+        IntNode n = hashmap_iterator_next(hashmap, &it);
+        printf("%d = %d\n", n.key, n.value);
+    }
+    printf("%ld\n", hashmap_header(hashmap)->length);
 
     Node *smap = NULL;
     string_hashmap_push(smap, "Test", 10);
@@ -47,7 +56,7 @@ void test_hash() {
     assert(3 == string_hashmap_get(smap, "Foo"));
     assert(3 == hashmap_header(smap)->insert_count);
 
-    HashmapIterator it = hashmap_iterator(smap);
+    it = hashmap_iterator(smap);
     while(hashmap_iterator_has_next(&it)) {
         Node n = hashmap_iterator_next(smap, &it);
         printf("%s = %d\n", n.key, n.value);

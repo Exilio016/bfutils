@@ -46,6 +46,9 @@ USAGE:
         string_split:
             char **string_split(const char *, const char*); Splits a NULL terminated string by a delimiter. Returns a vector of NULL terminated strings.
             The returned vector needs to be free by calling vector_free on each element and itself.
+
+        string_format:
+            char *string_format(const char*, ...); Returns the formatted string. It needs to be free by calling vector_free. 
     
     Compile-time options:
         
@@ -102,6 +105,7 @@ LICENSE:
 #define string_push bfutils_string_push_str
 #define string_push_cstr bfutils_string_push_cstr
 #define string_split bfutils_string_split
+#define string_format bfutils_string_format
 
 #endif //BFUTILS_VECTOR_NO_SHORT_NAME
 
@@ -116,6 +120,7 @@ LICENSE:
 #endif //BFUTILS_REALLOC
 
 #include <stddef.h>
+#include <stdarg.h>
 #include <string.h>
 
 typedef struct {
@@ -140,6 +145,7 @@ extern void *bfutils_vector_capacity_grow(void *vector, size_t element_size, siz
 extern char* bfutils_string_push_cstr_f(char *str, const char *cstr);
 extern char* bfutils_string_push_str_f(char *str, const char *s);
 extern char** bfutils_string_split(const char *cstr, const char *delim);
+extern char* bfutils_string_format(const char *format, ...);
 
 #endif // VECTOR_H
 #ifdef BFUTILS_VECTOR_IMPLEMENTATION
@@ -206,4 +212,18 @@ char **bfutils_string_split(const char *cstr, const char *delim) {
     return list;
 }
 
+char* bfutils_string_format(const char *format, ...) {
+    char *res = NULL;
+    va_list list;
+    va_start(list, format);
+    int l = vsnprintf(res, 0, format, list);
+    vector_ensure_capacity(res, l + 1);
+    va_end(list);
+
+    va_start(list, format);
+    vsnprintf(res, l+1, format, list);
+    bfutils_vector_header(res)->length = l;
+    va_end(list);
+    return res;
+}
 #endif //BFUTILS_VECTOR_IMPLEMENTATION

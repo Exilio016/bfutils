@@ -102,7 +102,10 @@ int main(int argc, char **argv) {
         vector_free(list[i]);
     }
     test_hash();
+    char *test = string_format("Hello world %d", vector_length(list));
+    assert(0 == strcmp("Hello world 5", test));
 
+    vector_free(test);
     vector_free(builder);
     vector_free(new);
     vector_free(list);

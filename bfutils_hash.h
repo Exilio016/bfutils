@@ -303,6 +303,7 @@ long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size
 
     int is_slot_occupied = bfutils_hashmap_slots(hm)[slot_array_index] & (1 << slot_index);
     while (is_slot_occupied) {
+        index = slot_array_index * 8 + slot_index;
         int is_slot_removed = bfutils_hashmap_removed(hm)[slot_array_index] & (1 << slot_index);
         if (!is_slot_removed) {
             void *src = (unsigned char*) hm + (index * element_size) + key_offset;
@@ -311,7 +312,6 @@ long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size
             }
         }
 
-        index++;
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;

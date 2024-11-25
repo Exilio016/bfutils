@@ -50,16 +50,16 @@ USAGE:
             void hashmap_free(T*); Frees the hashmap.
         
         hashmap_iterator:
-            HashmapIterator hashmap_iterator(T*); Returns an iterator for the hashmap;
+            HashmapIterator hashmap_iterator(T*); Returns an iterator for the hashmap.
 
         hashmap_iterator_reverse:
-            HashmapIterator hashmap_iterator_reverse(T*); Returns an iterator for the hashmap in reverse order;
+            HashmapIterator hashmap_iterator_reverse(T*); Returns an iterator for the hashmap in reverse order.
         
         hashmap_iterator_has_next:
-            int hashmap_iterator_has_next(HashmapIterator *); Returns a non-zero value if a next position exits in the hashmap;
+            int hashmap_iterator_has_next(HashmapIterator *); Returns a non-zero value if a next position exits in the hashmap.
         
         hashmap_iterator_has_previous:
-            int hashmap_iterator_has_previous(HashmapIterator *); Returns a non-zero value if a previous position exits in the hashmap;
+            int hashmap_iterator_has_previous(HashmapIterator *); Returns a non-zero value if a previous position exits in the hashmap.
         
         hashmap_iterator_next:
             T hashmap_iterator_next(T*, HashmapIterator*); Returns the next position on the hashmap, it modifies the iterator.

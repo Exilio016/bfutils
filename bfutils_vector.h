@@ -18,10 +18,10 @@ USAGE:
             BFUtilsVectorHeader *vector_header(T*); Returns the header object.
 
         vector_capacity:
-            size_t vector_capacity(T*); Returns the vector capacity
+            size_t vector_capacity(T*); Returns the vector capacity.
 
         vector_length:
-            size_t vector_length(T*); Returns the vector length
+            size_t vector_length(T*); Returns the vector length.
 
         vector_ensure_capacity:
             void vector_ensure_capacity(T*, size_t); If current capacity is less that provided, grows the vector to provided capacity.

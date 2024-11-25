@@ -441,7 +441,7 @@ size_t bfutils_hashmap_iterator_next_position(BFUtilsHashmapIterator *it) {
         slot_index++;
         if (slot_index == 8){
             slot_index = 0;
-            slot_array_index = (slot_array_index + 1) % it->h->length;
+            slot_array_index = (slot_array_index + 1) % (it->h->length / 8);
         }
         index = slot_array_index * 8 + slot_index;
     }
@@ -467,7 +467,7 @@ size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator *it) {
 
         if (slot_index == 0){
             slot_index = 7;
-            slot_array_index = (slot_array_index - 1) % it->h->length;
+            slot_array_index = (slot_array_index - 1) % (it->h->length / 8);
         } else {
             slot_index--;
         }

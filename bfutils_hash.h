@@ -15,7 +15,7 @@ USAGE:
     To use bellow functions you need to have a type T containing an a TK key and a TV value.
     Then just declare: T *hashmap = NULL
 
-    If the key is a string, use the string_hash functions.
+    If the key is a string, use the string_hashmap functions.
 
     Functions (macros):
 

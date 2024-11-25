@@ -113,7 +113,6 @@ LICENSE:
 #define BFUTILS_HASHMAP_H
 
 #include <stddef.h>
-#include <string.h>
 
 typedef struct {
     size_t insert_count;
@@ -218,6 +217,7 @@ extern size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator 
 
 #endif // HASHMAP_H
 #ifdef BFUTILS_HASHMAP_IMPLEMENTATION
+#include <string.h>
 
 void *bfutils_hashmap_resize(void *hm, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
     int need_to_grow = bfutils_hashmap_length(hm) == 0 || bfutils_hashmap_insert_count(hm) / (double) bfutils_hashmap_length(hm) > 0.5;

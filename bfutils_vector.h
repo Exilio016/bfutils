@@ -120,9 +120,6 @@ LICENSE:
 #endif //BFUTILS_REALLOC
 
 #include <stddef.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 
 typedef struct {
     size_t length;
@@ -150,6 +147,9 @@ extern char* bfutils_string_format(const char *format, ...);
 
 #endif // VECTOR_H
 #ifdef BFUTILS_VECTOR_IMPLEMENTATION
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 void *bfutils_vector_grow(void *vector, size_t element_size, size_t length) {
     if (bfutils_vector_capacity(vector) < length) {

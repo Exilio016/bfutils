@@ -120,6 +120,7 @@ LICENSE:
 #endif //BFUTILS_REALLOC
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 

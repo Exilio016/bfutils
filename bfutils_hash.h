@@ -445,6 +445,7 @@ size_t bfutils_hashmap_iterator_next_position(BFUtilsHashmapIterator *it) {
         }
         index = slot_array_index * 8 + slot_index;
     }
+    it->started = 2;
     it->current = it->last;
     return it->current;
 }
@@ -473,6 +474,7 @@ size_t bfutils_hashmap_iterator_previous_position(BFUtilsHashmapIterator *it) {
         }
         index = slot_array_index * 8 + slot_index;
     }
+    it->started = 2;
     it->current = it->first;
     return it->current;
 }

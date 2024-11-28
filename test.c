@@ -5,6 +5,8 @@
 #include "bfutils_vector.h"
 #define BFUTILS_HASHMAP_IMPLEMENTATION
 #include "bfutils_hash.h"
+#define BFUTILS_PROCESS_IMPLEMENTATION
+#include "bfutils_process.h"
 
 typedef struct {
     int key;
@@ -71,6 +73,26 @@ void test_hash() {
     hashmap_free(hashmap);
 }
 
+void process_test() {
+    char *out;
+    char *err;
+    
+    char **cmd = (char*[]){"file", "-i", "bfutils_process.h", NULL};
+    int status = process_sync(cmd, NULL, &out, &err);
+    assert(status == 0);
+    assert(0 == strcmp("", err));
+    assert(0 == strcmp("bfutils_process.h: text/x-c; charset=utf-8\n", out));
+    free(out);
+    free(err);
+
+    status = process_sync((char*[]){"base64", NULL}, "abc", &out, &err);
+    assert(status == 0);
+    assert(0 == strcmp("", err));
+    assert(0 == strcmp("YWJj\n", out));
+    free(out);
+    free(err);
+}
+
 int main(int argc, char **argv) {
     int *v = NULL;
     printf("Length: %d\tCapacity: %d\n", (int) vector_length(v), (int) vector_capacity(v));
@@ -105,6 +127,7 @@ int main(int argc, char **argv) {
     char *test = string_format("Hello world %d", vector_length(list));
     assert(0 == strcmp("Hello world 5", test));
 
+    process_test();
     vector_free(test);
     vector_free(builder);
     vector_free(new);

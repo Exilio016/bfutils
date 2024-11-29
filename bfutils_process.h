@@ -14,13 +14,36 @@ USAGE:
 
     Functions (macros):
     
-        sync_process:
-        int process_sync(char *const *cmd, char *in, char **out, char **err); This function starts and waits for the process execution.
+        process_sync:
+        int process_sync(char *const *cmd, char *in, char **out, char **err); Starts and waits for the process execution.
             "cmd" needs to be a null-terminated array containing the process and its arguments.
             if "in" is not NULL, its content will be send to the process STDIN. 
             if "out", or "err" is not NULL, a null-terminated string will be placed at *out or *err with the contents of STDOUT and STDERR respectively.
             The caller needs to free *out and *err.
             The return value is the process status code.
+        
+        process_async:
+        Process process_async(char *const *cmd); Starts a new process and return imediatelly.
+            "cmd" needs to be a null-terminated array containing the process and its arguments.
+            It returns a handle to the process.
+            The caller needs to call process_close to close all opened file descriptors.
+
+        process_write_stdin:
+        void process_write_stdin(Process *p, const char *in); It writes the contents of in to the process stdin.
+
+        process_read_stdout:
+        char *process_read_stdout(Process *p); It returns the contents of the process stdout as a null-terminated string.
+            The caller needs to free the returned string.
+
+        process_read_stderr:
+        char *process_read_stderr(Process *p); It returns the contents of the process stderr as a null-terminated string.
+            The caller needs to free the returned string.
+
+        process_wait:
+        int process_wait(Process *p); It waits for the end of the process execution and returns its status code.
+
+        process_close:
+        process_close(Process *p); It closes all opened file descriptors.
     
     Compile-time options:
         
@@ -67,9 +90,26 @@ LICENSE:
 #ifndef BFUTILS_PROCESS_H
 #define BFUTILS_PROCESS_H
 
-#define process_sync bfutils_process_sync
+#include <sys/types.h>
+
+typedef struct {
+    pid_t pid;
+    int stdin_fd;
+    int stdout_fd;
+    int stderr_fd;
+} BFUtilsProcess;
 
 #ifndef BFUTILS_PROCESS_NO_SHORT_NAME
+
+#define process_sync bfutils_process_sync
+#define process_async bfutils_process_async
+#define process_write_stdin bfutils_process_write_stdin
+#define process_read_stdout bfutils_process_read_stdout
+#define process_read_stderr bfutils_process_read_stderr
+#define process_wait bfutils_process_wait
+#define process_close bfutils_process_close
+
+typedef BFUtilsProcess Process;
 
 #endif //BFUTILS_PROCESS_NO_SHORT_NAME
 
@@ -89,12 +129,20 @@ LICENSE:
 #endif //BFUTILS_PROCESS_REALLOC
 
 extern int bfutils_process_sync(char *const *cmd, const char *in, char **out, char **err);
+extern BFUtilsProcess bfutils_process_async(char *const *cmd);
+extern void bfutils_process_write_stdin(BFUtilsProcess *p, const char *in);
+extern char *bfutils_process_read_stdout(BFUtilsProcess *p);
+extern char *bfutils_process_read_stderr(BFUtilsProcess *p);
+extern int bfutils_process_wait(BFUtilsProcess *p);
+extern void bfutils_process_close(BFUtilsProcess *p);
 
 #endif // PROCESS_H
 #ifdef BFUTILS_PROCESS_IMPLEMENTATION
+#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 void read_fd(int fd, char **res) {
     char buffer[1024];
@@ -103,6 +151,7 @@ void read_fd(int fd, char **res) {
     *res = NULL;
     do {
         length = read(fd, buffer, 1024);
+        if (length < 0) length = 0;
         *res = (char*) BFUTILS_PROCESS_REALLOC(*res, count + length + 1);
         if (length > 0)
             strncpy(*res + count, buffer, length);
@@ -116,55 +165,142 @@ void close_pair(int *fd) {
     close(fd[1]);
 }
 
-int bfutils_process_sync(char *const *cmd, const char *in, char **out, char **err) {
+int set_fds_nonblock(int *stdout_fd, int *stderr_fd){
+    if (fcntl(stdout_fd[0], F_SETFD, O_NONBLOCK) < 0){
+        return 0;
+    }
+    if (fcntl(stdout_fd[1], F_SETFD, O_NONBLOCK) < 0){
+        return 0;
+    }
+    if (fcntl(stderr_fd[0], F_SETFD, O_NONBLOCK) < 0){
+        return 0;
+    }
+    if (fcntl(stderr_fd[1], F_SETFD, O_NONBLOCK) < 0){
+        return 0;
+    }
+    return 1;
+}
+
+BFUtilsProcess bfutils_process_async(char *const *cmd) {
+    BFUtilsProcess process = {.pid = -1, .stdin_fd = -1, .stdout_fd = -1, .stderr_fd = -1};
     if(cmd == NULL || *cmd == NULL) {
-        return -1;
+        return process;
     }
     int stdin_fd[2];
     int stdout_fd[2];
     int stderr_fd[2];
 
-    pipe(stdin_fd);
-    pipe(stdout_fd);
-    pipe(stderr_fd);
+    if (pipe(stdin_fd) < 0) {
+        return process;
+    }
+    if (pipe(stdout_fd) < 0) {
+        close_pair(stdin_fd);
+        return process;
+    }
+    if (pipe(stderr_fd) < 0) {
+        close_pair(stdin_fd);
+        close_pair(stdout_fd);
+        return process;
+    }
+
+    if (!set_fds_nonblock(stdout_fd, stderr_fd)){
+        close_pair(stdin_fd);
+        close_pair(stdout_fd);
+        close_pair(stderr_fd);
+        return process;
+    }
 
     pid_t pid;
     pid = fork();
     switch (pid) {
         case -1:
-            return -1;
+            return process;
         case 0:
-            dup2(stdin_fd[0], STDIN_FILENO);
+            if (dup2(stdin_fd[0], STDIN_FILENO) < 0) {
+                perror("dup2");
+                exit(1);
+            }
             close_pair(stdin_fd);
-            dup2(stdout_fd[1], STDOUT_FILENO);
+
+            if (dup2(stdout_fd[1], STDOUT_FILENO) < 0) {
+                perror("dup2");
+                exit(1);
+            }
             close_pair(stdout_fd);
-            dup2(stderr_fd[1], STDERR_FILENO);
+
+            if (dup2(stderr_fd[1], STDERR_FILENO) < 0) {
+                perror("dup2");
+                exit(1);
+            }
             close_pair(stderr_fd);
+
             execvp(cmd[0], cmd);
             break;
         default:
-            if (in != NULL) {
-                write(stdin_fd[1], in, strlen(in));
-            }
-            close_pair(stdin_fd);
-            
-            int status;
-            waitpid(pid, &status, 0);
-            
+            process.pid = pid;
+            process.stdin_fd = stdin_fd[1];
+            process.stdout_fd = stdout_fd[0];
+            process.stderr_fd = stderr_fd[0];
+            close(stdin_fd[0]);
             close(stdout_fd[1]);
-            if (out != NULL) {
-                read_fd(stdout_fd[0], out);
-            }
-            close(stdout_fd[0]);
             close(stderr_fd[1]);
-            if (err != NULL) {
-                read_fd(stderr_fd[0], err);
-            }
-            close(stderr_fd[0]);
-
-            return status;
     }
-    return -1;
+    return process;
 }
 
+int bfutils_process_sync(char *const *cmd, const char *in, char **out, char **err) {
+    BFUtilsProcess process = bfutils_process_async(cmd);
+    if (process.pid < 0) {
+        return -1;
+    }
+
+    bfutils_process_write_stdin(&process, in);
+    int status = bfutils_process_wait(&process);
+    
+    if (out != NULL) {
+        *out = bfutils_process_read_stdout(&process);
+    }
+
+    if (err != NULL) {
+        *err = bfutils_process_read_stderr(&process);
+    }
+    bfutils_process_close(&process);
+
+    return status;
+}
+
+void bfutils_process_write_stdin(BFUtilsProcess *p, const char *in) {
+    if (in != NULL) {
+        int wrote = 0;
+        int len = strlen(in);
+        do {
+            wrote += write(p->stdin_fd, in, len);
+        } while (wrote < len);
+    }
+}
+
+char *bfutils_process_read_stdout(BFUtilsProcess *p) {
+    char *out;
+    read_fd(p->stdout_fd, &out);
+    return out;
+}
+
+char *bfutils_process_read_stderr(BFUtilsProcess *p) {
+    char *out;
+    read_fd(p->stderr_fd, &out);
+    return out;
+}
+
+int bfutils_process_wait(BFUtilsProcess *p) {
+    int status;
+    close(p->stdin_fd);
+    waitpid(p->pid, &status, 0);
+    return status;
+}
+
+void bfutils_process_close(BFUtilsProcess *p) {
+    close(p->stdin_fd);
+    close(p->stdout_fd);
+    close(p->stderr_fd);
+}
 #endif //BFUTILS_PROCESS_IMPLEMENTATION

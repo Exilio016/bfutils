@@ -20,7 +20,7 @@ USAGE:
             if "in" is not NULL, its content will be send to the process STDIN. 
             if "out", or "err" is not NULL, a null-terminated string will be placed at *out or *err with the contents of STDOUT and STDERR respectively.
             The caller needs to free *out and *err.
-            The return value is the process status code.
+            The return value is the process exit status.
         
         process_async:
         Process process_async(char *const *cmd); Starts a new process and return imediatelly.
@@ -40,11 +40,12 @@ USAGE:
             The caller needs to free the returned string.
 
         process_wait:
-        int process_wait(Process *p); It waits for the end of the process execution and returns its status code.
+        int process_wait(Process *p); It waits for the end of the process execution and returns its exit status.
         
         process_is_running:
-        int process_is_running(Process *p); It returns a non-zero value if process is running.
+        int process_is_running(Process *p, int *status); It returns a non-zero value if process is running.
             If an error occurs on the waitpid internal call this function returns -1.
+            If "status" is not NULL and this function returned 0 (process has exited), *status will be populated with the process exit status.
 
         process_close:
         process_close(Process *p); It closes all opened file descriptors.
@@ -139,7 +140,7 @@ extern void bfutils_process_write_stdin(BFUtilsProcess *p, const char *in);
 extern char *bfutils_process_read_stdout(BFUtilsProcess *p);
 extern char *bfutils_process_read_stderr(BFUtilsProcess *p);
 extern int bfutils_process_wait(BFUtilsProcess *p);
-extern int bfutils_process_is_running(BFUtilsProcess *p);
+extern int bfutils_process_is_running(BFUtilsProcess *p, int *status);
 extern void bfutils_process_close(BFUtilsProcess *p);
 
 #endif // PROCESS_H
@@ -157,7 +158,9 @@ void read_fd(int fd, char **res) {
     *res = NULL;
     do {
         length = read(fd, buffer, 1024);
-        if (length < 0) length = 0;
+        if (length < 0){
+            length = 0;
+        }
         *res = (char*) BFUTILS_PROCESS_REALLOC(*res, count + length + 1);
         if (length > 0)
             strncpy(*res + count, buffer, length);
@@ -172,16 +175,16 @@ void close_pair(int *fd) {
 }
 
 int set_fds_nonblock(int *stdout_fd, int *stderr_fd){
-    if (fcntl(stdout_fd[0], F_SETFD, O_NONBLOCK) < 0){
+    if (fcntl(stdout_fd[0], F_SETFL, fcntl(stdout_fd[0], F_GETFL) | O_NONBLOCK) == -1){
         return 0;
     }
-    if (fcntl(stdout_fd[1], F_SETFD, O_NONBLOCK) < 0){
+    if (fcntl(stdout_fd[1], F_SETFL, fcntl(stdout_fd[1], F_GETFL) | O_NONBLOCK) == -1){
         return 0;
     }
-    if (fcntl(stderr_fd[0], F_SETFD, O_NONBLOCK) < 0){
+    if (fcntl(stderr_fd[0], F_SETFL, fcntl(stderr_fd[0], F_GETFL) | O_NONBLOCK) == -1){
         return 0;
     }
-    if (fcntl(stderr_fd[1], F_SETFD, O_NONBLOCK) < 0){
+    if (fcntl(stderr_fd[1], F_SETFL, fcntl(stderr_fd[1], F_GETFL) | O_NONBLOCK) == -1){
         return 0;
     }
     return 1;
@@ -316,12 +319,23 @@ int bfutils_process_wait(BFUtilsProcess *p) {
     return status;
 }
 
-int bfutils_process_is_running(BFUtilsProcess *p) {
+int bfutils_process_is_running(BFUtilsProcess *p, int *s) {
     int status;
     close(p->stdin_fd);
     int wpid = waitpid(p->pid, &status, WNOHANG);
     if (wpid < 0) {
         return -1;
+    }
+    if (wpid != 0 && s != NULL) {
+        if (WIFEXITED(status)) {
+            *s = WEXITSTATUS(status);
+        }
+        else if (WIFSIGNALED(status)) {
+            *s = WTERMSIG(status);
+        }
+        else if (WIFSTOPPED(status)) {
+            *s = WSTOPSIG(status);
+        }
     }
     return wpid == 0;
 }

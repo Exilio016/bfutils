@@ -185,7 +185,7 @@ BFUtilsProcess bfutils_process_async(char *const *cmd) {
     BFUtilsProcess process = {.pid = -1, .stdin_fd = -1, .stdout_fd = -1, .stderr_fd = -1};
     if(cmd == NULL || *cmd == NULL) {
         return process;
-    }
+}
     int stdin_fd[2];
     int stdout_fd[2];
     int stderr_fd[2];
@@ -294,7 +294,19 @@ char *bfutils_process_read_stderr(BFUtilsProcess *p) {
 int bfutils_process_wait(BFUtilsProcess *p) {
     int status;
     close(p->stdin_fd);
-    waitpid(p->pid, &status, 0);
+    int wpid = waitpid(p->pid, &status, 0);
+    if (wpid < 0) {
+        return -1;
+    }
+    if (WIFEXITED(status)) {
+        return WEXITSTATUS(status);
+    }
+    else if (WIFSIGNALED(status)) {
+        return WTERMSIG(status);
+    }
+    else if (WIFSTOPPED(status)) {
+        return WSTOPSIG(status);
+    }
     return status;
 }
 

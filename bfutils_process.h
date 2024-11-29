@@ -41,6 +41,10 @@ USAGE:
 
         process_wait:
         int process_wait(Process *p); It waits for the end of the process execution and returns its status code.
+        
+        process_is_running:
+        int process_is_running(Process *p); It returns a non-zero value if process is running.
+            If an error occurs on the waitpid internal call this function returns -1.
 
         process_close:
         process_close(Process *p); It closes all opened file descriptors.
@@ -107,6 +111,7 @@ typedef struct {
 #define process_read_stdout bfutils_process_read_stdout
 #define process_read_stderr bfutils_process_read_stderr
 #define process_wait bfutils_process_wait
+#define process_is_running bfutils_process_is_running
 #define process_close bfutils_process_close
 
 typedef BFUtilsProcess Process;
@@ -134,6 +139,7 @@ extern void bfutils_process_write_stdin(BFUtilsProcess *p, const char *in);
 extern char *bfutils_process_read_stdout(BFUtilsProcess *p);
 extern char *bfutils_process_read_stderr(BFUtilsProcess *p);
 extern int bfutils_process_wait(BFUtilsProcess *p);
+extern int bfutils_process_is_running(BFUtilsProcess *p);
 extern void bfutils_process_close(BFUtilsProcess *p);
 
 #endif // PROCESS_H
@@ -185,7 +191,7 @@ BFUtilsProcess bfutils_process_async(char *const *cmd) {
     BFUtilsProcess process = {.pid = -1, .stdin_fd = -1, .stdout_fd = -1, .stderr_fd = -1};
     if(cmd == NULL || *cmd == NULL) {
         return process;
-}
+    }
     int stdin_fd[2];
     int stdout_fd[2];
     int stderr_fd[2];
@@ -308,6 +314,16 @@ int bfutils_process_wait(BFUtilsProcess *p) {
         return WSTOPSIG(status);
     }
     return status;
+}
+
+int bfutils_process_is_running(BFUtilsProcess *p) {
+    int status;
+    close(p->stdin_fd);
+    int wpid = waitpid(p->pid, &status, WNOHANG);
+    if (wpid < 0) {
+        return -1;
+    }
+    return wpid == 0;
 }
 
 void bfutils_process_close(BFUtilsProcess *p) {

@@ -178,9 +178,10 @@ typedef BFUtilsHashmapIterator HashmapIterator;
 #define bfutils_hashmap_removed(h) ((h) ? bfutils_hashmap_header((h))->removed : NULL)
 #define bfutils_hashmap_push(h, k, v) { \
     (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
-    size_t pos = bfutils_hashmap_insert_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
-    (h)[pos].key = (k); \
-    (h)[pos].value = (v); \
+    __typeof__((h)->key) __key = (k); \
+    size_t __pos = bfutils_hashmap_insert_position((h), BFUTILS_HASHMAP_ADDRESSOF(__key), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
+    (h)[__pos].key = __key; \
+    (h)[__pos].value = (v); \
 }
 #define bfutils_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
@@ -188,9 +189,10 @@ typedef BFUtilsHashmapIterator HashmapIterator;
     (h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_string_hashmap_push(h, k, v) { \
     (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
-    size_t pos = bfutils_hashmap_insert_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
-    (h)[pos].key = (k); \
-    (h)[pos].value = (v); \
+    __typeof__((h)->key) __key = (k); \
+    size_t __pos = bfutils_hashmap_insert_position((h), __key, sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
+    (h)[__pos].key = __key; \
+    (h)[__pos].value = (v); \
 }
 #define bfutils_string_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
 #define bfutils_string_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)

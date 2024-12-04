@@ -151,9 +151,9 @@ void test_vector() {
 }
 
 #define BFUTILS_TEST_LIST \
-    X("Test bfutils_vector", test_vector) \
-    X("Test bfutils_hash", test_hash) \
-    X("Test bfutils_process", test_process)
+    X("bfutils_vector", test_vector) \
+    X("bfutils_hash", test_hash) \
+    X("bfutils_process", test_process)
 
-#define BFUTILS_TEST_IMPLEMENTATION
+#define BFUTILS_TEST_MAIN
 #include "bfutils_test.h"

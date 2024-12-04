@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
+#include "bfutils_test.h"
 #define BFUTILS_VECTOR_IMPLEMENTATION
 #include "bfutils_vector.h"
 #define BFUTILS_HASHMAP_IMPLEMENTATION
@@ -40,12 +41,13 @@ void test_hash() {
     for (int i = 10; i < 200; i++) {
         hashmap_remove(hashmap, i);
     }
+    int count = 0;
     HashmapIterator it = hashmap_iterator(hashmap);
     while(hashmap_iterator_has_next(&it)) {
         IntNode n = hashmap_iterator_next(hashmap, &it);
-        printf("%d = %d\n", n.key, n.value);
+        count++;
     }
-    printf("%ld\n", hashmap_header(hashmap)->length);
+    assert(10 == count);
 
     Node *smap = NULL;
     string_hashmap_push(smap, "Test", 10);
@@ -58,22 +60,27 @@ void test_hash() {
     assert(3 == string_hashmap_get(smap, "Foo"));
     assert(3 == hashmap_header(smap)->insert_count);
 
+    count = 0;
     it = hashmap_iterator(smap);
     while(hashmap_iterator_has_next(&it)) {
         Node n = hashmap_iterator_next(smap, &it);
-        printf("%s = %d\n", n.key, n.value);
+        count++;
     }
+    assert(3 == count);
+
+    count = 0;
     HashmapIterator itr = hashmap_iterator_reverse(smap);
     while(hashmap_iterator_has_previous(&itr)) {
         Node n = hashmap_iterator_previous(smap, &itr);
-        printf("%s = %d\n", n.key, n.value);
+        count++;
     }
+    assert(3 == count);
 
     hashmap_free(smap);
     hashmap_free(hashmap);
 }
 
-void process_test() {
+void test_process() {
     char *out;
     char *err;
     
@@ -93,44 +100,60 @@ void process_test() {
     free(err);
 }
 
-int main(int argc, char **argv) {
+void test_vector() {
     int *v = NULL;
-    printf("Length: %d\tCapacity: %d\n", (int) vector_length(v), (int) vector_capacity(v));
+    assert(0 == vector_length(v));
+    assert(0 == vector_capacity(v));
+
     for (int i = 0; i < 200; i++) {
         vector_push(v, i);
-        printf("Length: %d\tCapacity: %d\n", (int) vector_length(v), (int) vector_capacity(v));
+        assert(i+1 == vector_length(v));
     }
-    printf("v[124] = %d\n", v[124]);
-    printf("pop %d\n", vector_pop(v));
-    printf("pop %d\n", vector_pop(v));
-    printf("pop %d\n", vector_pop(v));
+    assert(124 == v[124]);
+    assert(199 == vector_pop(v));
+    assert(198 == vector_pop(v));
+    assert(197 == vector_pop(v));
 
     vector_ensure_capacity(v, 1024);
-    printf("Length: %d\tCapacity: %d\n", (int) vector_length(v), (int) vector_capacity(v));
+    assert(197 == vector_length(v));
+    assert(1024 == vector_capacity(v));
     vector_free(v);
 
     char *builder = NULL;
     string_push_cstr(builder, "Test");
-    printf("Length: %d\tCapacity: %d - %s\n", (int) vector_length(builder), (int) vector_capacity(builder), builder);
+    assert(0 == strcmp("Test", builder));
     char *new = NULL;
     string_push(new, builder);
-    printf("Length: %d\tCapacity: %d - %s\n", (int) vector_length(new), (int) vector_capacity(new), new);
+    assert(0 == strcmp("Test", new));
 
     char *source = "Hello, world, foo, bar, bazz";
     char **list = string_split(source, ", ");
-    printf("Splitted into %d chunks\n", (int) vector_length(list));
-    for (int i =0; i < vector_length(list); i++) {
-        printf("%s\n", list[i]);
-        vector_free(list[i]);
-    }
-    test_hash();
+    assert(5 == vector_length(list));
+
+    assert(0 == strcmp("Hello", list[0]));
+    vector_free(list[0]);
+    assert(0 == strcmp("world", list[1]));
+    vector_free(list[1]);
+    assert(0 == strcmp("foo", list[2]));
+    vector_free(list[2]);
+    assert(0 == strcmp("bar", list[3]));
+    vector_free(list[3]);
+    assert(0 == strcmp("bazz", list[4]));
+    vector_free(list[4]);
+
     char *test = string_format("Hello world %d", vector_length(list));
     assert(0 == strcmp("Hello world 5", test));
 
-    process_test();
     vector_free(test);
     vector_free(builder);
     vector_free(new);
     vector_free(list);
-    return 0;
 }
+
+#define BFUTILS_TEST_LIST \
+    X("Test bfutils_vector", test_vector) \
+    X("Test bfutils_hash", test_hash) \
+    X("Test bfutils_process", test_process)
+
+#define BFUTILS_TEST_IMPLEMENTATION
+#include "bfutils_test.h"

@@ -50,4 +50,4 @@ jobs:
       
     - name: Generate Artifacts
       run: |
-        7z a ./{{ env.PROJECT_RELEASE_PATH }}.zip ./${{ env.PROJECT_NAME }}/report
+        7z a ./{{ env.PROJECT_RELEASE }}.zip ./${{ env.PROJECT_NAME }}/report

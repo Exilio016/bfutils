@@ -4,7 +4,7 @@ on:
     paths:
       - '*.c'
       - '*.h'
-      - '.github/workflows/linux.yml'
+      - '.github/workflows/tests.yml'
   release:
     types: [published]
     
@@ -32,8 +32,8 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends python3 python3-pip
         sudo pip3 install gcovr
-        mkdir report
-        ls
+        mkdir ${{ env.PROJECT_NAME }}/report
+        ls ${{ env.PROJECT_NAME }}
       shell: bash
 
     - name: Build Product

@@ -18,9 +18,7 @@ jobs:
     runs-on: ubuntu-20.04
     
     env:
-      PROJECT_NAME: ${{ github.event.repository.name }}
-      PROJECT_RELEASE: ${{ github.event.repository.name }}_coverage
-      
+      PROJECT_NAME: ${{ github.event.repository.name }} 
     steps:
     - name: Checkout this repo
       uses: actions/checkout@master
@@ -50,4 +48,4 @@ jobs:
       
     - name: Generate Artifacts
       run: |
-        7z a ./{{ env.PROJECT_RELEASE }}.zip ./${{ env.PROJECT_NAME }}/report
+        7z a ./${{ env.PROJECT_NAME }}_coverage.zip ./${{ env.PROJECT_NAME }}/report

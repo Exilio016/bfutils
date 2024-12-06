@@ -150,10 +150,48 @@ void test_vector() {
     vector_free(list);
 }
 
+static int test_count;
+static int success_count;
+
+void before_all() {
+    printf("Unit tests for BFUTILS libraries\n");
+    test_count = 0;
+    success_count = 0;
+}
+
+void before_each() {
+    test_count++;
+}
+
+void after_each() {
+    success_count++;
+}
+
+void after_all() {
+    void (*test[])() = {
+        before_all, before_each, after_each
+    };
+    printf("%d tests executed, with %d success\n", test_count, success_count);
+}
+
+
+#define BFUTILS_TEST_BEFORE_ALL \
+    X(before_all)
+
+#define BFUTILS_TEST_BEFORE_EACH \
+    X(before_each)
+
+#define BFUTILS_TEST_AFTER_EACH \
+    X(after_each)
+
+#define BFUTILS_TEST_AFTER_ALL \
+    X(after_all) 
+
 #define BFUTILS_TEST_LIST \
     X("bfutils_vector", test_vector) \
     X("bfutils_hash", test_hash) \
     X("bfutils_process", test_process)
+
 
 #define BFUTILS_TEST_MAIN
 #include "bfutils_test.h"

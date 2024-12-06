@@ -6,7 +6,7 @@ DESCRIPTION:
 
 USAGE:
     
-    After declate all test funtions you can declare the following X-macros:
+    After declate all test funtions you can use the following X-macros to setup the tests:
        
        BFUTILS_TEST_LIST: A list of all test functions.
             #define BFUTILS_TEST_LIST \

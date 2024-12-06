@@ -1,0 +1,51 @@
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '*.c'
+      - '*.h'
+      - '.github/workflows/linux.yml'
+  release:
+    types: [published]
+    
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      contents: write       # for actions/upload-release-asset to upload release asset
+    runs-on: ubuntu-20.04
+    
+    env:
+      PROJECT_NAME: ${{ github.event.repository.name }}
+      PROJECT_RELEASE: ${{ github.event.repository.name }}_coverage
+      
+    steps:
+    - name: Checkout this repo
+      uses: actions/checkout@master
+      with:
+        path: ${{ env.PROJECT_NAME }}
+    
+    - name: Setup Environment
+      run: | 
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends python3 python3-pip
+        sudo pip3 install gcovr
+        mkdir report
+        ls
+      shell: bash
+
+    - name: Build Product
+      run: |
+        gcc -fPIC -fprofile-arcs -ftest-coverage -o test test.c
+    
+    - name: Run tests
+      run: |
+        ./test
+        gcov test.c
+        gcovr --root . --html --html-details --output report/coverage.html
+      
+    - name: Generate Artifacts
+      run: |
+        7z a ./{{ env.PROJECT_RELEASE_PATH }}.zip ./report

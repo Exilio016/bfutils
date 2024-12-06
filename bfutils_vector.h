@@ -205,7 +205,7 @@ char **bfutils_string_split(const char *cstr, const char *delim) {
     while (res != NULL) {
         char *t = NULL;
         bfutils_string_push_cstr(t, res);
-        vector_push(list, t);
+        bfutils_vector_push(list, t);
         res = strtok_r(NULL, delim, &saveptr);
     }
 
@@ -218,7 +218,7 @@ char* bfutils_string_format(const char *format, ...) {
     va_list list;
     va_start(list, format);
     int l = vsnprintf(res, 0, format, list);
-    vector_ensure_capacity(res, l + 1);
+    bfutils_vector_ensure_capacity(res, l + 1);
     va_end(list);
 
     va_start(list, format);

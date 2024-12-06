@@ -38,14 +38,16 @@ jobs:
 
     - name: Build Product
       run: |
+        cd ${{ env.PROJECT_NAME }}
         gcc -fPIC -fprofile-arcs -ftest-coverage -o test test.c
     
     - name: Run tests
       run: |
+        cd ${{ env.PROJECT_NAME }}
         ./test
         gcov test.c
         gcovr --root . --html --html-details --output report/coverage.html
       
     - name: Generate Artifacts
       run: |
-        7z a ./{{ env.PROJECT_RELEASE_PATH }}.zip ./report
+        7z a ./{{ env.PROJECT_RELEASE_PATH }}.zip ./${{ env.PROJECT_NAME }}/report

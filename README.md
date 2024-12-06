@@ -18,6 +18,7 @@ In the other source files, just include the library without the define:
 
 ## Libraries
 | File | Description |
+| ---- | ----------- |
 | [bfutils_vector.h](./bfutils_vector.h) | Provides dynamic arrays and string utilities |
 | [bfutils_hash.h](./bfutils_hash.h) | Provides Hashmaps |
 | [bfutils_process.h](./bfutils_process.h) | Utility funtions to create and work with process | 

@@ -81,35 +81,35 @@ typedef struct {
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(*a))
 
 int main(int argc, char *argv[]){ 
-    BFUtilsTestFunction before_all[] = {
+    BFUtilsTestFunction __before_all[] = {
         #ifdef BFUTILS_TEST_BEFORE_ALL
         #define X(func) func,
         BFUTILS_TEST_BEFORE_ALL
         #undef X
         #endif
     };
-    BFUtilsTestFunction before_each[] = {
+    BFUtilsTestFunction __before_each[] = {
         #ifdef BFUTILS_TEST_BEFORE_EACH
         #define X(func) func,
         BFUTILS_TEST_BEFORE_EACH
         #undef X
         #endif
     };
-    BFUtilsTestFunction after_all[] = {
+    BFUtilsTestFunction __after_all[] = {
         #ifdef BFUTILS_TEST_AFTER_ALL
         #define X(func) func,
         BFUTILS_TEST_AFTER_ALL
         #undef X
         #endif
     };
-    BFUtilsTestFunction after_each[] = {
+    BFUtilsTestFunction __after_each[] = {
         #ifdef BFUTILS_TEST_AFTER_EACH
         #define X(func) func,
         BFUTILS_TEST_AFTER_EACH
         #undef X
         #endif
     };
-    BFUtilsTest tests[] = {
+    BFUtilsTest __tests[] = {
         #ifdef BFUTILS_TEST_LIST
         #define X(n, f) (BFUtilsTest) {.name = n, .func = f},
         BFUTILS_TEST_LIST
@@ -117,22 +117,22 @@ int main(int argc, char *argv[]){
         #endif
     };
 
-    for (int i = 0; i < ARRAY_LEN(before_all); i++) {
-        before_all[i]();
+    for (int i = 0; i < ARRAY_LEN(__before_all); i++) {
+        __before_all[i]();
     }
-    for (int i = 0; i < ARRAY_LEN(tests); i++) {
-        for (int j = 0; j < ARRAY_LEN(before_each); j++) {
-            before_each[j]();
+    for (int i = 0; i < ARRAY_LEN(__tests); i++) {
+        for (int j = 0; j < ARRAY_LEN(__before_each); j++) {
+            __before_each[j]();
         }
-        printf("Test '%s':\n", tests[i].name);
-        tests[i].func();
+        printf("Test '%s':\n", __tests[i].name);
+        __tests[i].func();
         printf("\tPASSED\n");
-        for (int j = 0; j < ARRAY_LEN(after_each); j++) {
-            after_each[j]();
+        for (int j = 0; j < ARRAY_LEN(__after_each); j++) {
+            __after_each[j]();
         }
     }
-    for (int i = 0; i < ARRAY_LEN(after_all); i++) {
-        after_all[i]();
+    for (int i = 0; i < ARRAY_LEN(__after_all); i++) {
+        __after_all[i]();
     }
 }
 

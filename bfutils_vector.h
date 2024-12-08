@@ -149,6 +149,12 @@ typedef struct {
 #define bfutils_string_push_str(s, a) ((s) = bfutils_string_push_str_f((s), (a)))
 #define bfutils_vector(T, element_free) (bfutils_vector_with_free((element_free), sizeof(T)))
 
+#define BFUTILS_VECTOR_FREE_WRAPPER(name, T, f) void name(void *addr) {\
+    T *element_addr = (T*) addr; \
+    f(*element_addr); \
+}
+
+
 extern void *bfutils_vector_with_free(void (*element_free)(void*), size_t element_size);
 extern void *bfutils_vector_grow(void *vector, size_t element_size, size_t length);
 extern void *bfutils_vector_capacity_grow(void *vector, size_t element_size, size_t capacity);

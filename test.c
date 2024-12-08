@@ -150,11 +150,7 @@ void test_vector() {
     vector_free(list);
 }
 
-void free_matrix_element(void *el) {
-    int** element = (int**) el;
-    vector_free(*element);
-}
-
+BFUTILS_VECTOR_FREE_WRAPPER(free_matrix_element, int*, vector_free)
 void test_element_free() {
     int **matrix = vector(int*, free_matrix_element);
     for (int i = 0; i < 10; i++) {

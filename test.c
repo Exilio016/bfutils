@@ -163,6 +163,29 @@ void test_element_free() {
     assert(matrix == NULL);
 }
 
+typedef struct {
+    int key;
+    int *value;
+} NodeWithPtr;
+
+void free_node_with_ptr(void *obj) {
+    NodeWithPtr *node = (NodeWithPtr*) obj;
+    vector_free(node->value);
+}
+
+void test_hash_element_free() {
+    NodeWithPtr *map = hashmap(free_node_with_ptr);
+    for (int i = 0; i < 10; i++) {
+        int *vec = NULL;
+        for (int j = 0; j < 10; j++) {
+            vector_push(vec, i + j);
+        }
+        hashmap_push(map, i, vec);
+    }
+
+    hashmap_free(map);
+}
+
 static int test_count;
 static int success_count;
 
@@ -203,6 +226,7 @@ void after_all() {
     X("bfutils_vector", test_vector) \
     X("bfutils_vector element free", test_element_free)\
     X("bfutils_hash", test_hash) \
+    X("bfutils_hash element free", test_hash_element_free)\
     X("bfutils_process", test_process)
 
 

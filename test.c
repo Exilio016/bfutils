@@ -150,6 +150,23 @@ void test_vector() {
     vector_free(list);
 }
 
+void free_matrix_element(void *el) {
+    int** element = (int**) el;
+    vector_free(*element);
+}
+
+void test_element_free() {
+    int **matrix = vector(int*, free_matrix_element);
+    for (int i = 0; i < 10; i++) {
+        vector_push(matrix, NULL);
+        for (int j = 0; j < 10; j++) {
+            vector_push(matrix[i], i + j);
+        }
+    }
+    vector_free(matrix);
+    assert(matrix == NULL);
+}
+
 static int test_count;
 static int success_count;
 
@@ -174,7 +191,6 @@ void after_all() {
     printf("%d tests executed, with %d success\n", test_count, success_count);
 }
 
-
 #define BFUTILS_TEST_BEFORE_ALL \
     X(before_all)
 
@@ -189,6 +205,7 @@ void after_all() {
 
 #define BFUTILS_TEST_LIST \
     X("bfutils_vector", test_vector) \
+    X("bfutils_vector element free", test_element_free)\
     X("bfutils_hash", test_hash) \
     X("bfutils_process", test_process)
 

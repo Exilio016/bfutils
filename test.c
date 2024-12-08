@@ -182,6 +182,9 @@ void test_hash_element_free() {
         }
         hashmap_push(map, i, vec);
     }
+    int *vec = NULL;
+    vector_push(vec, 10);
+    hashmap_push(map, 2, vec);
 
     hashmap_free(map);
 }

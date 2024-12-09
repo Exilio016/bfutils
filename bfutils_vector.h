@@ -15,10 +15,10 @@ USAGE:
     Functions (macros):
 
         vector:
-            T *vector(T, void (*)(void*)); Initializes a vector.
+            T *vector(void (*)(void*)); Initializes a vector.
             A vector doesn't needs to be initialized using this function, initializing with NULL will work fine.
             This function is to be used when the internal elements of the vector needs to be free when freeing the vector.
-            The second parameter provided is a function to free an element of the vector. The function will receive a pointer to the element as a "void*".
+            The parameter ia a function to free an element of the vector. The function will receive a pointer to the element as a "void*".
 
         vector_header: 
             BFUtilsVectorHeader *vector_header(T*); Returns the header object.

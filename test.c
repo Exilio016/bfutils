@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <unistd.h>
 #include "bfutils_test.h"
 #define BFUTILS_VECTOR_IMPLEMENTATION
 #include "bfutils_vector.h"
@@ -98,6 +99,14 @@ void test_process() {
     assert(0 == strcmp("YWJj\n", out));
     free(out);
     free(err);
+
+    Process p = process_async((char*[]) {"sleep", "3", NULL});
+    int s;
+    while(process_is_running(&p, &s)){
+        sleep(1);
+    }
+    assert(s == 0);
+    process_close(&p);
 }
 
 void test_vector() {

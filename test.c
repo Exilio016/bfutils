@@ -152,7 +152,7 @@ void test_vector() {
 
 BFUTILS_VECTOR_FREE_WRAPPER(free_matrix_element, int*, vector_free)
 void test_element_free() {
-    int **matrix = vector(int*, free_matrix_element);
+    int **matrix = vector(free_matrix_element);
     for (int i = 0; i < 10; i++) {
         vector_push(matrix, NULL);
         for (int j = 0; j < 10; j++) {

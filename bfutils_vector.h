@@ -147,7 +147,7 @@ typedef struct {
 #define bfutils_vector_ensure_capacity(v, c) ((v) = bfutils_vector_capacity_grow((v), sizeof(*(v)), (c)))
 #define bfutils_string_push_cstr(s, a) ((s) = bfutils_string_push_cstr_f((s), (a)))
 #define bfutils_string_push_str(s, a) ((s) = bfutils_string_push_str_f((s), (a)))
-#define bfutils_vector(T, element_free) (bfutils_vector_with_free((element_free), sizeof(T)))
+#define bfutils_vector(element_free) (bfutils_vector_with_free((element_free)))
 
 #define BFUTILS_VECTOR_FREE_WRAPPER(name, T, f) void name(void *addr) {\
     T *element_addr = (T*) addr; \
@@ -155,7 +155,7 @@ typedef struct {
 }
 
 
-extern void *bfutils_vector_with_free(void (*element_free)(void*), size_t element_size);
+extern void *bfutils_vector_with_free(void (*element_free)(void*));
 extern void *bfutils_vector_grow(void *vector, size_t element_size, size_t length);
 extern void *bfutils_vector_capacity_grow(void *vector, size_t element_size, size_t capacity);
 extern char* bfutils_string_push_cstr_f(char *str, const char *cstr);
@@ -181,7 +181,7 @@ void bfutils_vector_free_func(void *vector, size_t element_size) {
 
     BFUTILS_FREE(bfutils_vector_header(vector));
 }
-void *bfutils_vector_with_free(void (*element_free) (void*), size_t element_size) {
+void *bfutils_vector_with_free(void (*element_free) (void*)) {
     BFUtilsVectorHeader *header = BFUTILS_REALLOC(NULL, sizeof(BFUtilsVectorHeader));
     header->capacity = 0;
     header->length = 0;

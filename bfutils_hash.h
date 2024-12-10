@@ -33,6 +33,9 @@ USAGE:
 
         hashmap_get:
             TV hashmap_get(T*, TK); Returns an element value from the hashmap.
+        
+        hashmap_get_element:
+            T hashmap_get_element(T*, TK); Returns an element from the hashmap.
 
         hashmap_remove:
             TV hashmap_remove(T*, TK); Removes and returns an element from the hashmap.
@@ -145,10 +148,12 @@ typedef struct {
 #define hashmap_header bfutils_hashmap_header
 #define hashmap_push bfutils_hashmap_push
 #define hashmap_get bfutils_hashmap_get
+#define hashmap_get_element bfutils_hashmap_get_element
 #define hashmap_remove bfutils_hashmap_remove
 #define hashmap_contains bfutils_hashmap_contains
 #define string_hashmap_push bfutils_string_hashmap_push
 #define string_hashmap_get bfutils_string_hashmap_get
+#define string_hashmap_get_element bfutils_string_hashmap_get_element
 #define string_hashmap_remove bfutils_string_hashmap_remove
 #define string_hashmap_contains bfutils_string_hashmap_contains
 #define hashmap_free bfutils_hashmap_free
@@ -180,7 +185,7 @@ typedef BFUtilsHashmapIterator HashmapIterator;
 #define BFUTILS_HASHMAP_FREE free
 #endif //BFUTILS_HASHMAP_REALLOC
 
-#define BFUTILS_HASHMAP_ADDRESSOF(v) ((__typeof__(v)[1]){v})
+#define BFUTILS_HASHMAP_ADDRESSOF(v) ((typeof(v)[1]){v})
 
 #define bfutils_hashmap_header(h) ((h) ? (BFUtilsHashmapHeader *)(h) - 1 : NULL)
 #define bfutils_hashmap_insert_count(h) ((h) ? bfutils_hashmap_header((h))->insert_count : 0)
@@ -188,27 +193,29 @@ typedef BFUtilsHashmapIterator HashmapIterator;
 #define bfutils_hashmap_slots(h) ((h) ? bfutils_hashmap_header((h))->slots : NULL)
 #define bfutils_hashmap_removed(h) ((h) ? bfutils_hashmap_header((h))->removed : NULL)
 #define bfutils_hashmap_push(h, k, v) { \
-    (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
-    __typeof__((h)->key) __key = (k); \
-    size_t __pos = bfutils_hashmap_insert_position((h), BFUTILS_HASHMAP_ADDRESSOF(__key), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0); \
+    (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0); \
+    typeof((h)->key) __key = (k); \
+    size_t __pos = bfutils_hashmap_insert_position((h), BFUTILS_HASHMAP_ADDRESSOF(__key), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0); \
     (h)[__pos].key = __key; \
     (h)[__pos].value = (v); \
 }
-#define bfutils_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
-#define bfutils_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0) > 0)
-#define bfutils_hashmap_remove(h, k) ((h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0),\
-    (h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0)].value)
+#define bfutils_hashmap_get_element(h, k) ((h)[bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0)])
+#define bfutils_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0) > 0)
+#define bfutils_hashmap_remove(h, k) ((h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0),\
+    (h)[bfutils_hashmap_remove_key((h), BFUTILS_HASHMAP_ADDRESSOF(k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 0)].value)
 #define bfutils_string_hashmap_push(h, k, v) { \
     (h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
-    __typeof__((h)->key) __key = (k); \
-    size_t __pos = bfutils_hashmap_insert_position((h), __key, sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1); \
+    typeof((h)->key) __key = (k); \
+    size_t __pos = bfutils_hashmap_insert_position((h), __key, sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1); \
     (h)[__pos].key = __key; \
     (h)[__pos].value = (v); \
 }
-#define bfutils_string_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
-#define bfutils_string_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1) > 0)
+#define bfutils_string_hashmap_get(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1)].value)
+#define bfutils_string_hashmap_get_element(h, k) ((h)[bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1)])
+#define bfutils_string_hashmap_contains(h, k) (bfutils_hashmap_get_position((h), (k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1) > 0)
 #define bfutils_string_hashmap_remove(h, k) ((h) = bfutils_hashmap_resize((h), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1) ,\
-    (h)[bfutils_hashmap_remove_key((h), (k), sizeof(*(h)), offsetof(__typeof__(*(h)), key), sizeof((h)->key), 1)].value)
+    (h)[bfutils_hashmap_remove_key((h), (k), sizeof(*(h)), offsetof(typeof(*(h)), key), sizeof((h)->key), 1)].value)
 #define bfutils_hashmap_free(h) (bfutils_hashmap_free_f((h), sizeof(*(h))), (h) = NULL)
 
 #define bfutils_hashmap_iterator_next(h, i) ((h)[bfutils_hashmap_iterator_next_position(i)])

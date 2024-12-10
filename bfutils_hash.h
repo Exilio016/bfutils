@@ -323,7 +323,7 @@ size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element
             removed_slot_index = slot_array_index * 8 + slot_index;
             continue;
         }
-        void *src = (unsigned char*) hm + (index * element_size) + key_offset;
+        void *src = (unsigned char*) hm + ((slot_array_index * 8 + slot_index) * element_size) + key_offset;
         if (0 == keycmp(key, src, key_size, is_string) && !is_slot_removed) {
             size_t pos = slot_array_index * 8 + slot_index;
             if (bfutils_hashmap_header(hm)->element_free != NULL) {

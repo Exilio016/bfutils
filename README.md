@@ -15,6 +15,28 @@ In the other source files, just include the library without the define:
 ```c
 #include "bfutils_vector.h"
 ```
+### CLI tool
+The file [bfutils.c](./bfutils.c) builds to a CLI tool that downloads the bfutils header from github to your project.
+#### Dependency
+This tool depends on openssl. On ubuntu you can install the dependency with the following command:
+```bash
+sudo apt install libssl-dev
+```
+#### Build
+To build the tool you can just run the following command:
+```bash
+cc -o bfutils bfutils.c -lssl
+```
+#### Usage
+To use the tool just run `bfutils [option]`. Option can be one of the following:
+| Option | Description |
+| ------ | ----------- |
+| -v | Downloads the bfutils_vector.h to current directory |
+| -m | Downloads the bfutils_hash.h to current directory |
+| -p | Downloads the bfutils_process.h to current directory |
+| -t | Downloads the bfutils_test.h to current directory |
+| -a | Downloads all bfutils headers to current directory |
+| -h | Show the help menu and exits |
 
 ## Libraries
 | File | Description |

@@ -82,11 +82,11 @@ void print_help(const char *name) {
     printf("BFUtils: CLI tool to add bfutils headers to your project\n");
     printf("usage: %s [-amvpt]\n", name);
     printf("Options:\n");
-    printf("  --all      -a    Include all headers\n");
-    printf("  --hashmap  -m    Include bfutils_hash.h header\n");
-    printf("  --vector   -v    Include bfutils_vector.h header\n");
-    printf("  --process  -p    Include bfutils_process.h header\n");
-    printf("  --test     -t    Include bfutils_test.h header\n");
+    printf("  --all      -a    Download all headers\n");
+    printf("  --hashmap  -m    Download bfutils_hash.h header\n");
+    printf("  --vector   -v    Download bfutils_vector.h header\n");
+    printf("  --process  -p    Download bfutils_process.h header\n");
+    printf("  --test     -t    Download bfutils_test.h header\n");
     printf("  --help     -h    Show this help menu and exit\n");
 }
 

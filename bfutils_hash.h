@@ -351,6 +351,7 @@ size_t bfutils_hashmap_insert_position(void *hm, const void *key, size_t element
 }
 
 long bfutils_hashmap_get_position(void *hm, const void *key, size_t element_size, size_t key_offset, size_t key_size, int is_string) {
+    if (bfutils_hashmap_length(hm) == 0) return -1;
     size_t hash = is_string ? bfutils_hashmap_function(key, strlen(key)) : bfutils_hashmap_function(key, key_size);
     size_t index = hash % bfutils_hashmap_length(hm);
     size_t slot_index = index % 8;

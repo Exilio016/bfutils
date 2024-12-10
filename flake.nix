@@ -37,8 +37,29 @@
         let
           pkgs = nixpkgsFor.${system};
         in
-        { }
+        {
+          default = pkgs.stdenv.mkDerivation {
+            inherit version;
+            name = "bfutils";
+            src = ./.;
+            buildInputs = with pkgs; [
+              gcc
+              openssl
+            ];
+            buildPhase = # bash
+              ''
+                gcc -o bfutils bfutils.c -lssl
+              '';
+            installPhase = # bash
+              ''
+                mkdir -p $out/bin
+                cp bfutils $out/bin/
+              '';
+          };
+        }
       );
+
+      defaultPackage = forAllSystems (system: self.packages.${system}.default);
 
       devShells = forAllSystems (
         system:
@@ -50,6 +71,7 @@
             buildInputs = with pkgs; [
               valgrind
               clang-tools
+              openssl
               bear
               gdb
               gcovr

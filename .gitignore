@@ -4,4 +4,5 @@ result/
 .envrc
 test
 compile_commands.json
-
+result
+bfutils

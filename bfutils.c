@@ -67,7 +67,8 @@ void write_file(const char *name, const char *content) {
         }
         if (s.st_mode & S_IFMT) {
             printf("File '%s' already exists. Do you want to overwrite it? (y/N)\n", name);
-            char c = fgetc(stdin);
+            char c;
+            scanf("%c\n", &c);
             if (tolower(c) != 'y') {
                 return;
             }

@@ -28,7 +28,7 @@ To build the tool you can just run the following command:
 cc -o bfutils bfutils.c -lssl
 ```
 #### Usage
-To use the tool just run `bfutils [option]`. Option can be one of the following:
+To use the tool just run `bfutils [option]`. Option can be any of the following:
 | Option | Description |
 | ------ | ----------- |
 | -v | Downloads the bfutils_vector.h to current directory |

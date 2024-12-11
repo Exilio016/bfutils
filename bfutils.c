@@ -29,6 +29,10 @@ char *get_file_response(SSL *ssl) {
     do {
         char buffer[1024] = {0};
         int l = SSL_read(ssl, buffer, 1024);
+        if (l < 0 && SSL_get_error(ssl, l) != SSL_ERROR_WANT_READ) {
+            fprintf(stderr, "Connection error\n");
+            exit(1);
+        }
         string_push_cstr(msg, buffer);
         if (SSL_pending(ssl) <= 0) {
             break;
@@ -52,7 +56,16 @@ char *get_file_response(SSL *ssl) {
     int l = vector_length(body);
     while (l < length) {
         char buffer[1024] = {0};
-        l += SSL_read(ssl, buffer, 1023);
+        int r = SSL_read(ssl, buffer, 1023);
+        if (r < 0) {
+            if (SSL_get_error(ssl, r) != SSL_ERROR_WANT_READ) {
+                fprintf(stderr, "Connection error\n");
+                exit(1);
+            }
+        }
+        else {
+            l += r;
+        }
         string_push_cstr(body, buffer);
     } 
     return body;

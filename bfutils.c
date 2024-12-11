@@ -88,7 +88,17 @@ void write_file(const char *name, const char *content) {
         }
     }
     FILE *fp = fopen(name, "w");
-    fwrite(content, sizeof(char), vector_length(content), fp);
+    if (fp == NULL) {
+        char *err = string_format("Could not open file '%s' for write", name);
+        perror(err);
+        vector_free(err);
+        exit(1);
+    }
+    if (fwrite(content, sizeof(char), vector_length(content), fp) < vector_length(content)) {
+        fprintf(stderr, "Failed to write to file '%s'\n", name);
+        exit(1);
+    }
+
     fclose(fp);
 }
 

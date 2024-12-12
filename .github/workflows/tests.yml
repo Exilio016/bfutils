@@ -46,24 +46,22 @@ jobs:
         gcov test.c
         gcovr --root . --html --html-details --output report/coverage.html
 
+    - name: upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with: 
+        path: ${{ env.PROJECT_NAME }}/report/
+
   deploy:
     needs: build
     runs-on: ubuntu-20.04
     permissions:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
-    env:
-      PROJECT_NAME: ${{ github.event.repository.name }} 
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with: 
-          path: ${{ env.PROJECT_NAME }}/report/
-      
       - name: deploy to Github Pages
         uses: actions/deploy-pages@v3
         id: deployment

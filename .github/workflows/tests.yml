@@ -45,7 +45,22 @@ jobs:
         ./test
         gcov test.c
         gcovr --root . --html --html-details --output report/coverage.html
+
+  deploy:
+    needs: build
+    environment:
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-20.04
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    steps:
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with: 
+          path: ${{ env.PROJECT_NAME }}/report/
       
-    - name: Generate Artifacts
-      run: |
-        7z a ./${{ env.PROJECT_NAME }}_coverage.zip ./${{ env.PROJECT_NAME }}/report
+      - name: deploy to Github Pages
+        uses: actions/deploy-pages@v3
+        id: deployment

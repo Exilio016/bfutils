@@ -21,31 +21,31 @@ typedef struct {
 } Node;
 
 void test_hash() {
-    IntNode *hashmap = NULL;
-    hashmap_push(hashmap, 8, 120);
-    assert(120 == hashmap_get(hashmap, 8));
+    IntNode *map = NULL;
+    hashmap_push(map, 8, 120);
+    assert(120 == hashmap_get(map, 8));
     for(int i = 0 ; i < 200; i++) {
-        hashmap_push(hashmap, i, i*5);
+        hashmap_push(map, i, i*5);
         if (i == 96) {
-            assert(96 * 5 == hashmap_remove(hashmap, i));
+            assert(96 * 5 == hashmap_remove(map, i));
         }
     }
     for(int i = 0 ; i < 200; i++) {
         if (i == 96) {
-            assert(!hashmap_contains(hashmap, i));
+            assert(!hashmap_contains(map, i));
         }
         else {
-            int val = hashmap_get(hashmap, i);
+            int val = hashmap_get(map, i);
             assert(val == (i*5));
         }
     }
     for (int i = 10; i < 200; i++) {
-        hashmap_remove(hashmap, i);
+        hashmap_remove(map, i);
     }
     int count = 0;
-    HashmapIterator it = hashmap_iterator(hashmap);
+    HashmapIterator it = hashmap_iterator(map);
     while(hashmap_iterator_has_next(&it)) {
-        IntNode n = hashmap_iterator_next(hashmap, &it);
+        IntNode n = hashmap_iterator_next(map, &it);
         count++;
     }
     assert(10 == count);
@@ -78,7 +78,7 @@ void test_hash() {
     assert(3 == count);
 
     hashmap_free(smap);
-    hashmap_free(hashmap);
+    hashmap_free(map);
 }
 
 void test_process() {
@@ -216,9 +216,6 @@ void after_each() {
 }
 
 void after_all() {
-    void (*test[])() = {
-        before_all, before_each, after_each
-    };
     printf("%d tests executed, with %d success\n", test_count, success_count);
 }
 

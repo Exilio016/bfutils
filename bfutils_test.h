@@ -123,6 +123,7 @@ int main(int argc, char *argv[]){
     for (int i = 0; i < ARRAY_LEN(__before_all); i++) {
         __before_all[i]();
     }
+    int success = 1;
     for (int i = 0; i < ARRAY_LEN(__tests); i++) {
         for (int j = 0; j < ARRAY_LEN(__before_each); j++) {
             __before_each[j]();
@@ -133,6 +134,9 @@ int main(int argc, char *argv[]){
         if (bfutils_test_success) {
             printf("\tPASSED\n");
         }
+        else {
+            success = 0;
+        }
         for (int j = 0; j < ARRAY_LEN(__after_each); j++) {
             __after_each[j]();
         }
@@ -140,6 +144,10 @@ int main(int argc, char *argv[]){
     for (int i = 0; i < ARRAY_LEN(__after_all); i++) {
         __after_all[i]();
     }
+    if (success) {
+        return 0;
+    }
+    return 1;
 }
 
 #endif //BFUTILS_TEST_MAIN

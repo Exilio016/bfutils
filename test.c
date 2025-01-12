@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
@@ -212,7 +211,9 @@ void before_each() {
 }
 
 void after_each() {
-    success_count++;
+    if (bfutils_test_success) {
+        success_count++;
+    }
 }
 
 void after_all() {

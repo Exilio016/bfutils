@@ -75,6 +75,9 @@ typedef struct {
     BFUtilsTestFunction func;
 } BFUtilsTest;
 
+static int bfutils_test_success = 1;
+
+#define assert(exp) if (!(exp)) {printf("\tFAILED: %s\n", #exp); bfutils_test_success = 0; return; }
 #endif // TEST_H
 #ifdef BFUTILS_TEST_MAIN
 #include <stdio.h>
@@ -124,9 +127,12 @@ int main(int argc, char *argv[]){
         for (int j = 0; j < ARRAY_LEN(__before_each); j++) {
             __before_each[j]();
         }
+        bfutils_test_success = 1;
         printf("Test '%s':\n", __tests[i].name);
         __tests[i].func();
-        printf("\tPASSED\n");
+        if (bfutils_test_success) {
+            printf("\tPASSED\n");
+        }
         for (int j = 0; j < ARRAY_LEN(__after_each); j++) {
             __after_each[j]();
         }

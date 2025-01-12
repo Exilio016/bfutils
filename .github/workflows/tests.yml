@@ -51,15 +51,3 @@ jobs:
       id: deployment
       with: 
         path: ${{ env.PROJECT_NAME }}/report/
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-20.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: deploy to Github Pages
-        uses: actions/deploy-pages@v3
-        id: deployment

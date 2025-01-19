@@ -85,7 +85,11 @@ typedef struct {
 
 static int bfutils_test_success = 1;
 
-#define bfutils_assert(exp) if (!(exp)) {printf("\tFAILED: %s\n", #exp); bfutils_test_success = 0; return; }
+#define bfutils_assert(exp) if (!(exp)) { \
+    printf("\tFAILURE at %s:%d <%s>\n", __FILE__, __LINE__, #exp); \
+    bfutils_test_success = 0; \
+    return; \
+}
 #endif // TEST_H
 #ifdef BFUTILS_TEST_MAIN
 #include <stdio.h>

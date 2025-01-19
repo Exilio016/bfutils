@@ -6,6 +6,10 @@ DESCRIPTION:
 
 USAGE:
     
+    Macros:
+        assert(exp); To be used on test functions.
+        it marks the test case as a failure and print the expression to stdout.
+
     After declate all test funtions you can use the following X-macros to setup the tests:
        
        BFUTILS_TEST_LIST: A list of all test functions.
@@ -68,6 +72,10 @@ LICENSE:
 #ifndef BFUTILS_TEST_H
 #define BFUTILS_TEST_H
 
+#ifndef BFUTILS_TEST_NO_SHORT_NAMES
+#define assert bfutils_assert
+#endif //BFUTILS_TEST_NO_SHORT_NAMES
+
 typedef void (*BFUtilsTestFunction)();
 
 typedef struct {
@@ -77,7 +85,7 @@ typedef struct {
 
 static int bfutils_test_success = 1;
 
-#define assert(exp) if (!(exp)) {printf("\tFAILED: %s\n", #exp); bfutils_test_success = 0; return; }
+#define bfutils_assert(exp) if (!(exp)) {printf("\tFAILED: %s\n", #exp); bfutils_test_success = 0; return; }
 #endif // TEST_H
 #ifdef BFUTILS_TEST_MAIN
 #include <stdio.h>

@@ -33,12 +33,24 @@ typedef struct {
     char **files;
     int files_len;
     char *cflags;
-    char *libs;
-}BFUtilsBuildExecutable;
+    char *ldflags;
+}BFUtilsBuildCfg;
+
+enum BFUtilsBuildError {
+    BFUTILS_BUILD_ERROR_MKDIR,
+    BFUTILS_BUILD_ERROR_OPEN,
+    BFUTILS_BUILD_ERROR_EXEC,
+    BFUTILS_BUILD_ERROR_OUTSIDE_FUNCTION,
+    BFUTILS_BUILD_ERROR_MISSING_NAME,
+    BFUTILS_BUILD_ERROR_MISSING_FILE,
+    BFUTILS_BUILD_ERROR_INVALID_FILENAME,
+};
 
 #define bfutils_add_executable(cfg) bfutils_add_executable_fn(cfg, __FILE__, __LINE__);
+#define bfutils_add_library(cfg) bfutils_add_library_fn(cfg, __FILE__, __LINE__);
 void bfutils_build(int argc, char *argv[]);
-void bfutils_add_executable_fn(BFUtilsBuildExecutable cfg, char *file, int line);
+void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line);
+void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line);
 
 #endif //BFUTILS_BUILD_H
 #ifdef BFUTILS_BUILD_IMPLEMENTATION
@@ -53,32 +65,34 @@ void bfutils_add_executable_fn(BFUtilsBuildExecutable cfg, char *file, int line)
 
 static FILE *bfutils_build_fp = NULL;
 static char *bfutils_build_cflags = "";
-static char *bfutils_build_libs = "";
+static char *bfutils_build_ldflags = "";
+static char* bfutils_build_source_files[255];
+static int bfutils_build_source_files_len = 0;
 int main(int argc, char *argv[]) {
     if (mkdir("target", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
         perror("mkdir");
-        exit(1);
+        exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     if (mkdir("target/bin", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
         perror("mkdir");
-        exit(1);
+        exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     if (mkdir("target/objs", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
         perror("mkdir");
-        exit(1);
+        exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     bfutils_build_fp = fopen("target/build.ninja", "w");
     if (bfutils_build_fp == NULL) {
         perror("fopen");
-        exit(2);
+        exit(BFUTILS_BUILD_ERROR_OPEN);
     }
     FILE *fp = fopen("target/stage1.ninja", "w");
     if (fp == NULL) {
         perror("fopen");
-        exit(2);
+        exit(BFUTILS_BUILD_ERROR_OPEN);
     }
     fprintf(fp, "cflags = %s\n", bfutils_build_cflags);
-    fprintf(fp, "libs = %s\n", bfutils_build_libs);
+    fprintf(fp, "ldflags = %s\n", bfutils_build_ldflags);
     fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF target/$out.d $in -o $out\n depfile = target/$out.d\n");
     fprintf(fp, "rule cc2\n command = gcc -DSTAGE2 $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n");
     fprintf(fp, "rule rebuild\n command = target/build\n");
@@ -89,20 +103,21 @@ int main(int argc, char *argv[]) {
     #ifndef STAGE2
     if (execlp("ninja", "ninja", "-f", "./target/stage1.ninja", NULL) < 0) {
         perror("execlp");
-        exit(5);
+        exit(BFUTILS_BUILD_ERROR_EXEC);
     }
     #endif //STAGE2
 
     fprintf(bfutils_build_fp, "cflags = %s\n", bfutils_build_cflags);
-    fprintf(bfutils_build_fp, "libs = %s\n", bfutils_build_libs);
+    fprintf(bfutils_build_fp, "ldflags = %s\n", bfutils_build_ldflags);
     fprintf(bfutils_build_fp, "rule cc\n command = gcc $cflags -MD -MF $out.d -c $in -o $out\n depfile = $out.d\n");
-    fprintf(bfutils_build_fp, "rule link\n command = gcc $in $libs -o $out\n");
+    fprintf(bfutils_build_fp, "rule link\n command = gcc $in $ldflags -o $out\n");
+    fprintf(bfutils_build_fp, "rule lib\n command = gcc -fPIC -shared $in $ldflags -o $out\n");
     bfutils_build(argc, argv);
     fclose(bfutils_build_fp);
     bfutils_build_fp = NULL;
     if (execlp("ninja", "ninja", "-f", "target/build.ninja", NULL) < 0) {
         perror("execlp");
-        exit(5);
+        exit(BFUTILS_BUILD_ERROR_EXEC);
     }
 }
 
@@ -110,45 +125,101 @@ char *bfutils_get_file_object(char *filename) {
     int l = strlen(filename);
     char *res = malloc((l+1) * sizeof(char));
     strncpy(res, filename, l);
-    //TODO: validate if string has length to add .o
     char *ext = strrchr(res, '.');
+    if (ext == NULL || strlen(ext) < 2) {
+        fprintf(stderr, "Invalid source file name <%s>\n", filename);
+        exit(BFUTILS_BUILD_ERROR_INVALID_FILENAME);
+    }
     ext[1] = 'o';
     ext[2] = '\0';
     return res;
 }
 
-void bfutils_add_executable_fn(BFUtilsBuildExecutable cfg, char *file, int line) {
+static int bfutils_build_check_duplicate(char *file) {
+    for (int i = 0; i < bfutils_build_source_files_len; i++) {
+        if (strcmp(file, bfutils_build_source_files[i]) == 0) {
+            return 1;
+        }
+    }
+    bfutils_build_source_files[bfutils_build_source_files_len++] = file;
+    return 0;
+}
+
+void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
     if (bfutils_build_fp == NULL) {
-        fprintf(stderr, "Error on %s:%d - bfutils_add_executable must be called inside bfutils_build function", file, line);
-        exit(3);
+        fprintf(stderr, "Error on %s:%d - bfutils_add_executable must be called inside bfutils_build function\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_OUTSIDE_FUNCTION);
     }
     if (cfg.name == NULL || strlen(cfg.name) == 0) {
-        fprintf(stderr, "Error on %s:%d - An executable must have a valid name", file, line);
-        exit(4);
+        fprintf(stderr, "Error on %s:%d - An executable must have a valid name\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_MISSING_NAME);
     }
     if (cfg.files_len <= 0) {
-        fprintf(stderr, "Error on %s:%d - An executable must have source files", file, line);
-        exit(4);
+        fprintf(stderr, "Error on %s:%d - An executable must have source files\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_MISSING_FILE);
     }
     char **objs = malloc(sizeof(char *) * cfg.files_len);
+    int objs_len = 0;
     for (int i = 0; i < cfg.files_len; i++) {
         char *file = basename(cfg.files[i]);
+        if (bfutils_build_check_duplicate(file)) {
+            continue;
+        }
         char *obj = bfutils_get_file_object(file);
-        objs[i] = obj;
+        objs[objs_len++] = obj;
+        fprintf(bfutils_build_fp, "build target/objs/%s: cc %s\n", obj, cfg.files[i]);
+        if (cfg.cflags) {
+            fprintf(bfutils_build_fp, " cflags = %s\n", cfg.cflags);
+        }
+    }
+    fprintf(bfutils_build_fp, "build target/lib/lib%s.so: lib", cfg.name);
+    for (int i = 0; i < objs_len; i++) {
+        fprintf(bfutils_build_fp, " target/objs/%s", objs[i]);
+        free(objs[i]);
+    }
+    free(objs);
+    fprintf(bfutils_build_fp, "\n");
+    if (cfg.ldflags) {
+        fprintf(bfutils_build_fp, " ldflags = %s\n", cfg.ldflags);
+    }
+}
+
+void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line) {
+    if (bfutils_build_fp == NULL) {
+        fprintf(stderr, "Error on %s:%d - bfutils_add_executable must be called inside bfutils_build function\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_OUTSIDE_FUNCTION);
+    }
+    if (cfg.name == NULL || strlen(cfg.name) == 0) {
+        fprintf(stderr, "Error on %s:%d - An executable must have a valid name\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_MISSING_NAME);
+    }
+    if (cfg.files_len <= 0) {
+        fprintf(stderr, "Error on %s:%d - An executable must have source files\n", file, line);
+        exit(BFUTILS_BUILD_ERROR_MISSING_FILE);
+    }
+    char **objs = malloc(sizeof(char *) * cfg.files_len);
+    int objs_len = 0;
+    for (int i = 0; i < cfg.files_len; i++) {
+        char *file = basename(cfg.files[i]);
+        if (bfutils_build_check_duplicate(file)) {
+            continue;
+        }
+        char *obj = bfutils_get_file_object(file);
+        objs[objs_len++] = obj;
         fprintf(bfutils_build_fp, "build target/objs/%s: cc %s\n", obj, cfg.files[i]);
         if (cfg.cflags) {
             fprintf(bfutils_build_fp, " cflags = %s\n", cfg.cflags);
         }
     }
     fprintf(bfutils_build_fp, "build target/bin/%s: link", cfg.name);
-    for (int i = 0; i < cfg.files_len; i++) {
+    for (int i = 0; i < objs_len; i++) {
         fprintf(bfutils_build_fp, " target/objs/%s", objs[i]);
         free(objs[i]);
     }
     free(objs);
     fprintf(bfutils_build_fp, "\n");
-    if (cfg.libs) {
-        fprintf(bfutils_build_fp, " libs = %s\n", cfg.libs);
+    if (cfg.ldflags) {
+        fprintf(bfutils_build_fp, " ldflags = %s\n", cfg.ldflags);
     }
 }
 #endif //BFUTILS_BUILD_IMPLEMENTATION

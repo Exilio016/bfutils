@@ -55,7 +55,7 @@
             installPhase = # bash
               ''
                 mkdir -p $out
-                cp -r target/bin $out/bin
+                cp target/bin/bfutils $out/bin/
               '';
           };
         }

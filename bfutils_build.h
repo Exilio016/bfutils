@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n");
     fprintf(fp, "rule rebuild\n command = target/build\n");
     fprintf(fp, "build target/build: cc build.c\n");
-    fprintf(fp, "build stage2: rebuild target/build\n");
+    fprintf(fp, "build stage2: rebuild\n");
     fclose(fp);
     #ifndef STAGE2
     if (execlp("ninja", "ninja", "-f", "./target/stage1.ninja", NULL) < 0) {

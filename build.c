@@ -9,6 +9,13 @@ void bfutils_build(int argc, char *argv[]) {
         .libs = "-lssl",
         .cflags = "-Wall -Werror -O3",
     };
-
     bfutils_add_executable(bfutils);
+
+    BFUtilsBuildExecutable test = {
+        .name = "test",
+        .libs = "-fPIC -fprofile-arcs -ftest-coverage",
+        .files = (char*[]) { "test.c" },
+        .files_len = 1,
+    };
+    bfutils_add_executable(test);
 }

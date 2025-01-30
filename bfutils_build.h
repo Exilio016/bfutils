@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
 char *bfutils_get_file_object(char *filename) {
     int l = strlen(filename);
     char *res = malloc((l+1) * sizeof(char));
-    strncpy(res, filename, l);
+    strncpy(res, filename, l+1);
     char *ext = strrchr(res, '.');
     if (ext == NULL || strlen(ext) < 2) {
         fprintf(stderr, "Invalid source file name <%s>\n", filename);

@@ -1,8 +1,9 @@
 result/
+target/
 .cache/
 .direnv/
 .envrc
 test
 compile_commands.json
 result
-bfutils
+build

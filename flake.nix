@@ -45,15 +45,17 @@
             buildInputs = with pkgs; [
               gcc
               openssl
+              ninja
             ];
             buildPhase = # bash
               ''
-                gcc -o bfutils bfutils.c -lssl
+                gcc -o build build.c
+                ./build
               '';
             installPhase = # bash
               ''
-                mkdir -p $out/bin
-                cp bfutils $out/bin/
+                mkdir -p $out
+                cp -r target/bin $out/bin
               '';
           };
         }
@@ -69,6 +71,7 @@
         {
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
+              ninja
               valgrind
               clang-tools
               openssl

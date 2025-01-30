@@ -25,7 +25,8 @@ sudo apt install libssl-dev
 #### Build
 To build the tool you can just run the following command:
 ```bash
-cc -o bfutils bfutils.c -lssl
+cc -o build build.c
+./build
 ```
 #### Usage
 To use the tool just run `bfutils [option]`. Option can be any of the following:

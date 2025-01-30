@@ -45,6 +45,7 @@ void test_hash() {
     HashmapIterator it = hashmap_iterator(map);
     while(hashmap_iterator_has_next(&it)) {
         IntNode n = hashmap_iterator_next(map, &it);
+        (void) n;
         count++;
     }
     assert(10 == count);
@@ -64,6 +65,7 @@ void test_hash() {
     it = hashmap_iterator(smap);
     while(hashmap_iterator_has_next(&it)) {
         Node n = hashmap_iterator_next(smap, &it);
+        (void) n;
         count++;
     }
     assert(3 == count);
@@ -72,6 +74,7 @@ void test_hash() {
     HashmapIterator itr = hashmap_iterator_reverse(smap);
     while(hashmap_iterator_has_previous(&itr)) {
         Node n = hashmap_iterator_previous(smap, &itr);
+        (void) n;
         count++;
     }
     assert(3 == count);

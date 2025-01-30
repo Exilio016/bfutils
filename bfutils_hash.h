@@ -269,7 +269,7 @@ void *bfutils_hashmap_resize(void *hm, size_t element_size, size_t key_offset, s
         old_data = (unsigned char*) BFUTILS_HASHMAP_MALLOC(element_size * old_length);
         memcpy(old_data, hm, element_size * old_length);
     }
-    void (*element_free)(void*) = bfutils_hashmap_header(hm) ? bfutils_hashmap_header(hm)->element_free : NULL;
+    void (*element_free)(void*) = bfutils_hashmap_header(hm) != NULL ? bfutils_hashmap_header(hm)->element_free : NULL;
     BFUtilsHashmapHeader *header = (BFUtilsHashmapHeader*) BFUTILS_HASHMAP_REALLOC(bfutils_hashmap_header(hm), sizeof(BFUtilsHashmapHeader) + (element_size * length));
     header->slots = (unsigned char*) BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);
     header->removed = (unsigned char*) BFUTILS_HASHMAP_CALLOC(1, length / 8 + 1);

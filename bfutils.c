@@ -104,13 +104,14 @@ void write_file(const char *name, const char *content) {
 
 void print_help(const char *name) {
     printf("BFUtils: CLI tool to add bfutils headers to your project\n");
-    printf("usage: %s [-amvpt]\n", name);
+    printf("usage: %s [-amvptbh]\n", name);
     printf("Options:\n");
     printf("  --all      -a    Download all headers\n");
     printf("  --hashmap  -m    Download bfutils_hash.h header\n");
     printf("  --vector   -v    Download bfutils_vector.h header\n");
     printf("  --process  -p    Download bfutils_process.h header\n");
     printf("  --test     -t    Download bfutils_test.h header\n");
+    printf("  --build    -b    Download bfutils_build.h header\n");
     printf("  --help     -h    Show this help menu and exit\n");
 }
 
@@ -122,12 +123,14 @@ int main(int argc, char *argv[]) {
         (struct option) {.name = "process", .val = 'p', .has_arg = 0, .flag = NULL},
         (struct option) {.name = "help", .val = 'h', .has_arg = 0, .flag = NULL},
         (struct option) {.name = "test", .val = 't', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "build", .val = 'b', .has_arg = 0, .flag = NULL},
         (struct option) {0},
     };
     int include_hashmap = 0;
     int include_vector = 0;
     int include_process = 0;
     int include_test = 0;
+    int include_build = 0;
 
     char opt;
     do {
@@ -151,11 +154,15 @@ int main(int argc, char *argv[]) {
             case 't':
                 include_test = 1;
                 break;
+            case 'b':
+                include_build = 1;
+                break;
             case 'a':
                 include_hashmap = 1;
                 include_vector = 1;
                 include_process = 1;
                 include_test = 1;
+                include_build = 1;
                 break;
             default:
                 assert(0 && "Unknown option");
@@ -217,6 +224,12 @@ int main(int argc, char *argv[]) {
         request_file(ssl, "bfutils_test.h");
         char *content = get_file_response(ssl);
         write_file("bfutils_test.h", content);
+        vector_free(content);
+    }
+    if (include_build) {
+        request_file(ssl, "bfutils_build.h");
+        char *content = get_file_response(ssl);
+        write_file("bfutils_build.h", content);
         vector_free(content);
     }
 

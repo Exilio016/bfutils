@@ -91,6 +91,7 @@ int main(int argc, char *argv[]) {
         perror("fopen");
         exit(BFUTILS_BUILD_ERROR_OPEN);
     }
+    fprintf(fp, "builddir = target\n");
     fprintf(fp, "cflags = %s\n", bfutils_build_cflags);
     fprintf(fp, "ldflags = %s\n", bfutils_build_ldflags);
     fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF target/$out.d $in -o $out\n depfile = target/$out.d\n");
@@ -107,6 +108,7 @@ int main(int argc, char *argv[]) {
     }
     #endif //STAGE2
 
+    fprintf(bfutils_build_fp, "builddir = target\n");
     fprintf(bfutils_build_fp, "cflags = %s\n", bfutils_build_cflags);
     fprintf(bfutils_build_fp, "ldflags = %s\n", bfutils_build_ldflags);
     fprintf(bfutils_build_fp, "rule cc\n command = gcc $cflags -MD -MF $out.d -c $in -o $out\n depfile = $out.d\n");

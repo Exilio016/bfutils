@@ -77,12 +77,14 @@ int main(int argc, char *argv[]) {
         perror("fopen");
         exit(2);
     }
-    fprintf(fp, "cflags = -DSTAGE2 %s\n", bfutils_build_cflags);
+    fprintf(fp, "cflags = %s\n", bfutils_build_cflags);
     fprintf(fp, "libs = %s\n", bfutils_build_libs);
-    fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n");
+    fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF target/$out.d $in -o $out\n depfile = target/$out.d\n");
+    fprintf(fp, "rule cc2\n command = gcc -DSTAGE2 $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n");
     fprintf(fp, "rule rebuild\n command = target/build\n");
-    fprintf(fp, "build target/build: cc build.c\n");
-    fprintf(fp, "build stage2: rebuild\n");
+    fprintf(fp, "build build: cc build.c\n");
+    fprintf(fp, "build target/build: cc2 build.c || build\n");
+    fprintf(fp, "build stage2: rebuild || target/build\n");
     fclose(fp);
     #ifndef STAGE2
     if (execlp("ninja", "ninja", "-f", "./target/stage1.ninja", NULL) < 0) {

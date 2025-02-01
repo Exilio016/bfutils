@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <string.h>
 #include "bfutils_test.h"
 #define BFUTILS_VECTOR_IMPLEMENTATION
 #include "bfutils_vector.h"

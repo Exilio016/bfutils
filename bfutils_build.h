@@ -47,10 +47,10 @@ enum BFUtilsBuildError {
 };
 
 #define bfutils_add_executable(cfg) bfutils_add_executable_fn(cfg, __FILE__, __LINE__);
-#define bfutils_add_library(cfg) bfutils_add_library_fn(cfg, __FILE__, __LINE__);
+#define bfutils_add_shared_library(cfg) bfutils_add_shared_library_fn(cfg, __FILE__, __LINE__);
 void bfutils_build(int argc, char *argv[]);
 void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line);
-void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line);
+void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line);
 
 #endif //BFUTILS_BUILD_H
 #ifdef BFUTILS_BUILD_IMPLEMENTATION
@@ -63,12 +63,21 @@ void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line);
 #include <libgen.h>
 #include <unistd.h>
 
+extern char **environ;
 static FILE *bfutils_build_fp = NULL;
-static char *bfutils_build_cflags = "";
-static char *bfutils_build_ldflags = "";
 static char* bfutils_build_source_files[255];
 static int bfutils_build_source_files_len = 0;
 int main(int argc, char *argv[]) {
+    char cc[255] = "gcc";
+    char **env = environ;
+    while (*env) {
+        if (strncmp(*env, "CC=", 3) == 0) {
+            strncpy(cc, (*env) + 3, 254);
+            break;
+        }
+        env++;
+    }
+
     if (mkdir("target", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
         perror("mkdir");
         exit(BFUTILS_BUILD_ERROR_MKDIR);
@@ -92,10 +101,10 @@ int main(int argc, char *argv[]) {
         exit(BFUTILS_BUILD_ERROR_OPEN);
     }
     fprintf(fp, "builddir = target\n");
-    fprintf(fp, "cflags = %s\n", bfutils_build_cflags);
-    fprintf(fp, "ldflags = %s\n", bfutils_build_ldflags);
-    fprintf(fp, "rule cc\n command = gcc $cflags -MD -MF target/$out.d $in -o $out\n depfile = target/$out.d\n");
-    fprintf(fp, "rule cc2\n command = gcc -DSTAGE2 $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n");
+    fprintf(fp, "cflags = %s\n", BFUTILS_BUILD_CFLAGS);
+    fprintf(fp, "ldflags = %s\n", BFUTILS_BUILD_LDFLAGS);
+    fprintf(fp, "rule cc\n command = %s $cflags -MD -MF target/$out.d $in -o $out\n depfile = target/$out.d\n", cc);
+    fprintf(fp, "rule cc2\n command = %s -DSTAGE2 $cflags -MD -MF $out.d $in -o $out\n depfile = $out.d\n", cc);
     fprintf(fp, "rule rebuild\n command = target/build\n");
     fprintf(fp, "build build: cc build.c\n");
     fprintf(fp, "build target/build: cc2 build.c || build\n");
@@ -109,11 +118,11 @@ int main(int argc, char *argv[]) {
     #endif //STAGE2
 
     fprintf(bfutils_build_fp, "builddir = target\n");
-    fprintf(bfutils_build_fp, "cflags = %s\n", bfutils_build_cflags);
-    fprintf(bfutils_build_fp, "ldflags = %s\n", bfutils_build_ldflags);
-    fprintf(bfutils_build_fp, "rule cc\n command = gcc $cflags -MD -MF $out.d -c $in -o $out\n depfile = $out.d\n");
-    fprintf(bfutils_build_fp, "rule link\n command = gcc $in $ldflags -o $out\n");
-    fprintf(bfutils_build_fp, "rule lib\n command = gcc -fPIC -shared $in $ldflags -o $out\n");
+    fprintf(bfutils_build_fp, "cflags = %s\n", BFUTILS_BUILD_CFLAGS);
+    fprintf(bfutils_build_fp, "ldflags = %s\n", BFUTILS_BUILD_LDFLAGS);
+    fprintf(bfutils_build_fp, "rule cc\n command = %s $cflags -MD -MF $out.d -c $in -o $out\n depfile = $out.d\n", cc);
+    fprintf(bfutils_build_fp, "rule link\n command = %s $in $ldflags -o $out\n", cc);
+    fprintf(bfutils_build_fp, "rule lib\n command = %s -shared $in $ldflags -o $out\n", cc);
     bfutils_build(argc, argv);
     fclose(bfutils_build_fp);
     bfutils_build_fp = NULL;
@@ -147,7 +156,7 @@ static int bfutils_build_check_duplicate(char *file) {
     return 0;
 }
 
-void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
+void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
     if (bfutils_build_fp == NULL) {
         fprintf(stderr, "Error on %s:%d - bfutils_add_executable must be called inside bfutils_build function\n", file, line);
         exit(BFUTILS_BUILD_ERROR_OUTSIDE_FUNCTION);
@@ -171,7 +180,10 @@ void bfutils_add_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
         objs[objs_len++] = obj;
         fprintf(bfutils_build_fp, "build target/objs/%s: cc %s\n", obj, cfg.files[i]);
         if (cfg.cflags) {
-            fprintf(bfutils_build_fp, " cflags = %s\n", cfg.cflags);
+            fprintf(bfutils_build_fp, " cflags = -fPIC %s\n", cfg.cflags);
+        }
+        else {
+            fprintf(bfutils_build_fp, " cflags = -fPIC %s\n", BFUTILS_BUILD_CFLAGS);
         }
     }
     fprintf(bfutils_build_fp, "build target/lib/lib%s.so: lib", cfg.name);

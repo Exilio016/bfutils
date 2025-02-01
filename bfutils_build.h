@@ -28,6 +28,13 @@ LICENSE:
 #ifndef BFUTILS_BUILD_H
 #define BFUTILS_BUILD_H
 
+#ifndef BFUTILS_BUILD_CFLAGS
+#define BFUTILS_BUILD_CFLAGS ""
+#endif
+#ifndef BFUTILS_BUILD_LDFLAGS
+#define BFUTILS_BUILD_LDFLAGS ""
+#endif
+
 typedef struct {
     char *name;
     char **files;

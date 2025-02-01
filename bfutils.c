@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 
     char opt;
     do {
-        opt = getopt_long(argc, argv, "amvpth", longopts, NULL); 
+        opt = getopt_long(argc, argv, "amvptbh", longopts, NULL); 
         switch (opt) {
             case -1:
                 break;

@@ -44,6 +44,7 @@
             src = ./.;
             buildInputs = with pkgs; [
               gcc
+              pkg-config
               openssl
               ninja
             ];
@@ -72,6 +73,7 @@
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
               ninja
+              pkg-config
               valgrind
               clang-tools
               openssl

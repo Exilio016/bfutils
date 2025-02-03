@@ -96,6 +96,8 @@ typedef struct {
     char *name;
     char **files;
     int files_len;
+    char **deps;
+    int deps_len;
     char *cflags;
     char *ldflags;
 }BFUtilsBuildCfg;
@@ -220,6 +222,56 @@ static int bfutils_build_check_duplicate(char *file) {
     return 0;
 }
 
+static char *bfutils_pkg_config_cflags(char *dep) {
+    if(dep == NULL) {
+        return NULL;
+    }
+
+    char cmd[strlen(dep) + 21];
+    sprintf(cmd, "pkg-config --cflags %s", dep);
+    FILE *p = popen(cmd, "r");
+    
+    char buffer[1024];
+
+    char *res = NULL;
+    size_t i = 0;
+    size_t n;
+    do {
+        n = fread(buffer, sizeof(char), 1024, p);
+        res = realloc(res, sizeof(char) * (i + n + 1));
+        strncpy(res + i, buffer, n);
+        i += n;
+    } while(n == 1024);
+    pclose(p);
+    res[i -1] = '\0';
+    return res;
+}
+
+static char *bfutils_pkg_config_ldflags(char *dep) {
+    if(dep == NULL) {
+        return NULL;
+    }
+
+    char cmd[strlen(dep) + 21];
+    sprintf(cmd, "pkg-config --libs %s", dep);
+    FILE *p = popen(cmd, "r");
+    
+    char buffer[1024];
+
+    char *res = NULL;
+    size_t i = 0;
+    size_t n;
+    do {
+        n = fread(buffer, sizeof(char), 1024, p);
+        res = realloc(res, sizeof(char) * (i + n + 1));
+        strncpy(res + i, buffer, n);
+        i += n;
+    } while(n == 1024);
+    pclose(p);
+    res[i - 1] = '\0';
+    return res;
+}
+
 void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
     if (bfutils_build_fp == NULL) {
         fprintf(stderr, "Error on %s:%d - bfutils_add_executable must be called inside bfutils_build function\n", file, line);
@@ -243,7 +295,17 @@ void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
         char *obj = bfutils_get_file_object(file);
         objs[objs_len++] = obj;
         fprintf(bfutils_build_fp, "build target/objs/%s: cc %s\n", obj, cfg.files[i]);
-        if (cfg.cflags) {
+        if (cfg.deps_len > 0) {
+            char *other_flags = cfg.cflags ? cfg.cflags : BFUTILS_BUILD_CFLAGS;
+            fprintf(bfutils_build_fp, " cflags = -fPIC");
+            for (int i = 0; i < cfg.deps_len; i++) {
+                char *val = bfutils_pkg_config_cflags(cfg.deps[i]);
+                fprintf(bfutils_build_fp, " %s", val);
+                free(val);
+            }
+            fprintf(bfutils_build_fp, " %s\n", other_flags);
+        }
+        else if (cfg.cflags) {
             fprintf(bfutils_build_fp, " cflags = -fPIC %s\n", cfg.cflags);
         }
         else {
@@ -257,7 +319,17 @@ void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line) {
     }
     free(objs);
     fprintf(bfutils_build_fp, "\n");
-    if (cfg.ldflags) {
+    if (cfg.deps_len > 0) {
+        char *other_flags = cfg.ldflags ? cfg.ldflags : BFUTILS_BUILD_LDFLAGS;
+        fprintf(bfutils_build_fp, " ldflags =");
+        for (int i = 0; i < cfg.deps_len; i++) {
+            char *val = bfutils_pkg_config_ldflags(cfg.deps[i]);
+            fprintf(bfutils_build_fp, " %s", val);
+            free(val);
+        }
+        fprintf(bfutils_build_fp, " %s\n", other_flags);
+    }
+    else if (cfg.ldflags) {
         fprintf(bfutils_build_fp, " ldflags = %s\n", cfg.ldflags);
     }
 }
@@ -285,7 +357,17 @@ void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line) {
         char *obj = bfutils_get_file_object(file);
         objs[objs_len++] = obj;
         fprintf(bfutils_build_fp, "build target/objs/%s: cc %s\n", obj, cfg.files[i]);
-        if (cfg.cflags) {
+        if (cfg.deps_len > 0) {
+            char *other_flags = cfg.cflags ? cfg.cflags : BFUTILS_BUILD_CFLAGS;
+            fprintf(bfutils_build_fp, " cflags =");
+            for (int i = 0; i < cfg.deps_len; i++) {
+                char *val = bfutils_pkg_config_cflags(cfg.deps[i]);
+                fprintf(bfutils_build_fp, " %s", val);
+                free(val);
+            }
+            fprintf(bfutils_build_fp, " %s\n", other_flags);
+        }
+        else if (cfg.cflags) {
             fprintf(bfutils_build_fp, " cflags = %s\n", cfg.cflags);
         }
     }
@@ -296,7 +378,17 @@ void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line) {
     }
     free(objs);
     fprintf(bfutils_build_fp, "\n");
-    if (cfg.ldflags) {
+    if (cfg.deps_len > 0) {
+        char *other_flags = cfg.ldflags ? cfg.ldflags : BFUTILS_BUILD_LDFLAGS;
+        fprintf(bfutils_build_fp, " ldflags =");
+        for (int i = 0; i < cfg.deps_len; i++) {
+            char *val = bfutils_pkg_config_ldflags(cfg.deps[i]);
+            fprintf(bfutils_build_fp, " %s", val);
+            free(val);
+        }
+        fprintf(bfutils_build_fp, " %s\n", other_flags);
+    }
+    else if (cfg.ldflags) {
         fprintf(bfutils_build_fp, " ldflags = %s\n", cfg.ldflags);
     }
 }

@@ -7,8 +7,8 @@ void bfutils_build(int argc, char *argv[]) {
         .name = "bfutils",
         .files = (char*[]) { "bfutils.c" },
         .files_len = 1,
-        .ldflags = "-lssl",
-        .cflags = "-Wall -Werror -O3",
+        .deps = (char*[]) { "openssl" },
+        .deps_len = 1
     };
     bfutils_add_executable(bfutils);
     

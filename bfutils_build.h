@@ -1,4 +1,61 @@
-/*
+/*bfutils_build
+DESCRIPTION: 
+
+    This is a single-header-file library that can be used as a build system for your c project.
+    It generates build.ninja files and execute ninja to compile it.
+
+DEPENDENCIES:
+    
+    - ninja (https://ninja-build.org/)
+    - pkg-config (optional)
+
+USAGE:
+    
+    To use the bfutils_build system you need to create a file named "build.c" on the project root directory.
+    In the "build.c" include the following lines:
+        #define BFUTILS_BUILD_IMPLEMENTATION
+        #include "bfutils_build.h"
+    
+        void bfutils_build(int argc, char *argv[]) {
+            //Your build configuration goes here...
+        }
+
+    To build your project you need to compile once the "build.c" to an executable named "build" as below:
+        cc -o build build.c
+
+    Then you just need to execute "./build". 
+    "build.c" needs to be compiled only once, as it can rebuild itself before building your project.
+    
+    Functions (macros):
+        
+        bfutils_add_executable:
+            void bfutils_add_executable(BFUtilsBuildCfg cfg); This function needs to be called inside bfutils_build.
+            It defines an new compilation target for your project.
+            It will compile an executable on target/bin with the name defined in "cfg.name".
+            Each file in "cfg.files" will be compiled to a ".o" file on target/objs.
+            If BFUTILS_BUILD_CFLAGS is defined it will be included on the compilation command for the ".o" files.
+            If "cfg.cflags" is not NULL, it will be used instead of BFUTILS_BUILD_CFLAGS.
+            If BFUTILS_BUILD_LDFLAGS is defined, it will be included on the link command for the executable file.
+            If "cfg.ldflags" is not NULL, it will be used instead of BFUTILS_BUILD_LDFLAGS.
+
+        bfutils_add_shared_library:
+            void bfutils_add_shared_library(BFUtilsBuildCfg); This function needs to be called inside bfutils_build.
+            It defines an new compilation target for your project.
+            It will compile a shared library on target/lib with the name "lib${cfg.name}.so".
+            Each file in "cfg.files" will be compiled to a ".o" file on target/objs.
+            If BFUTILS_BUILD_CFLAGS is defined it will be included on the compilation command for the ".o" files.
+            If "cfg.cflags" is not NULL, it will be used instead of BFUTILS_BUILD_CFLAGS.
+            If BFUTILS_BUILD_LDFLAGS is defined, it will be included on the link command for the shared library.
+            If "cfg.ldflags" is not NULL, it will be used instead of BFUTILS_BUILD_LDFLAGS.
+
+    Compile-time options:
+        
+        #define BFUTILS_BUILD_CFLAGS cflags
+        #define BFUTILS_BUILD_LDFLAGS ldflags
+
+        These flags needs to be defined before the #include "bfutils_build.h".
+        These flags sets the default CFLAGS and LDFLAGS used for compiling and linking your project.
+
 LICENSE:
 
     MIT License

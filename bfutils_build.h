@@ -110,6 +110,7 @@ enum BFUtilsBuildError {
     BFUTILS_BUILD_ERROR_MISSING_NAME,
     BFUTILS_BUILD_ERROR_MISSING_FILE,
     BFUTILS_BUILD_ERROR_INVALID_FILENAME,
+    BFUTILS_BUILD_ERROR_PKG_CONFIG,
 };
 
 #define bfutils_add_executable(cfg) bfutils_add_executable_fn(cfg, __FILE__, __LINE__);
@@ -242,7 +243,10 @@ static char *bfutils_pkg_config_cflags(char *dep) {
         strncpy(res + i, buffer, n);
         i += n;
     } while(n == 1024);
-    pclose(p);
+    if (pclose(p) != 0) {
+        free(res);
+        exit(BFUTILS_BUILD_ERROR_PKG_CONFIG);
+    }
     res[i -1] = '\0';
     return res;
 }
@@ -267,7 +271,10 @@ static char *bfutils_pkg_config_ldflags(char *dep) {
         strncpy(res + i, buffer, n);
         i += n;
     } while(n == 1024);
-    pclose(p);
+    if (pclose(p) != 0) {
+        free(res);
+        exit(BFUTILS_BUILD_ERROR_PKG_CONFIG);
+    }
     res[i - 1] = '\0';
     return res;
 }

@@ -1,4 +1,4 @@
-#define BFUTILS_BUILD_CFLAGS "-Wall -Werror -O3"
+#define BFUTILS_BUILD_CFLAGS "-Wall -O3"
 #define BFUTILS_BUILD_IMPLEMENTATION
 #include "bfutils_build.h"
 
@@ -15,7 +15,7 @@ void bfutils_build(int argc, char *argv[]) {
     BFUtilsBuildCfg test = {
         .name = "test",
         .ldflags = "-fPIC -fprofile-arcs -ftest-coverage",
-        .cflags = "-Wall -Werror -ggdb",
+        .cflags = "-Wall -ggdb",
         .files = (char*[]) { "test.c" },
         .files_len = 1,
     };

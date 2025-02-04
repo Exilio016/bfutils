@@ -28,7 +28,7 @@ jobs:
     - name: Setup Environment
       run: | 
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends python3 python3-pip
+        sudo apt-get install -y --no-install-recommends python3 python3-pip pkg-config
         sudo pip3 install gcovr
         mkdir ${{ env.PROJECT_NAME }}/report
         ls ${{ env.PROJECT_NAME }}
@@ -37,7 +37,8 @@ jobs:
     - name: Build Product
       run: |
         cd ${{ env.PROJECT_NAME }}
-        gcc -fPIC -fprofile-arcs -ftest-coverage -o test test.c
+        gcc -o build build.c
+        ./build
     
     - name: Run tests
       run: |

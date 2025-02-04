@@ -14,8 +14,8 @@ void bfutils_build(int argc, char *argv[]) {
     
     BFUtilsBuildCfg test = {
         .name = "test",
-        .ldflags = "-fPIC -fprofile-arcs -ftest-coverage",
-        .cflags = "-Wall -ggdb",
+        .ldflags = "-fprofile-arcs",
+        .cflags = "-fPIC -fprofile-arcs -ftest-coverage",
         .files = (char*[]) { "test.c" },
         .files_len = 1,
     };

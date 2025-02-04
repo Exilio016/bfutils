@@ -44,6 +44,7 @@ jobs:
       run: |
         cd ${{ env.PROJECT_NAME }}
         ./target/bin/test || exit 1
+        cp target/objs/test* .
         gcov test.c
         gcovr --root . --html --html-details --output report/coverage.html
 

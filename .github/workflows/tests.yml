@@ -28,7 +28,7 @@ jobs:
     - name: Setup Environment
       run: | 
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends python3 python3-pip pkg-config
+        sudo apt-get install -y --no-install-recommends python3 python3-pip pkg-config ninja
         sudo pip3 install gcovr
         mkdir ${{ env.PROJECT_NAME }}/report
         ls ${{ env.PROJECT_NAME }}

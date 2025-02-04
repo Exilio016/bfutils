@@ -43,7 +43,7 @@ jobs:
     - name: Run tests
       run: |
         cd ${{ env.PROJECT_NAME }}
-        ./test || exit 1
+        ./target/test || exit 1
         gcov test.c
         gcovr --root . --html --html-details --output report/coverage.html
 

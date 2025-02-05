@@ -117,13 +117,13 @@ void print_help(const char *name) {
 
 int main(int argc, char *argv[]) {
     struct option *longopts = (struct option[]) {
-        (struct option) {.name = "all", .val = 'a', .flag = NULL, .has_arg = 0},
+        (struct option) {.name = "all",     .val = 'a', .has_arg = 0, .flag = NULL},
         (struct option) {.name = "hashmap", .val = 'm', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "vector", .val = 'v', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "vector",  .val = 'v', .has_arg = 0, .flag = NULL},
         (struct option) {.name = "process", .val = 'p', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "help", .val = 'h', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "test", .val = 't', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "build", .val = 'b', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "test",    .val = 't', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "build",   .val = 'b', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "help",    .val = 'h', .has_arg = 0, .flag = NULL},
         (struct option) {0},
     };
     int include_hashmap = 0;
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
         }
     } while(opt > 0);
 
-    if (!include_hashmap && !include_test && !include_vector && !include_process) {
+    if (!include_hashmap && !include_test && !include_vector && !include_process && !include_build) {
         print_help(argv[0]);
         exit(0);
     }

@@ -121,10 +121,18 @@ const char *header_files[HEADER_COUNT] = {
     HEADERS
 #undef X
 };
+char header_options[HEADER_COUNT + 3] = {
+    'a',
+    #define X(n, f, o, opt) o,
+        HEADERS
+    #undef X
+    'h',
+    '\0',
+};
 
 void print_help(const char *name) {
     printf("BFUtils: CLI tool to add bfutils headers to your project\n");
-    printf("usage: %s [-amvptbh]\n", name);
+    printf("usage: %s [-%s]\n", name, header_options);
     printf("Options:\n");
     printf("  --all\t\t\t-a\t\tDownload all headers\n");
     #define X(n, file, o, opt) \
@@ -145,18 +153,10 @@ int main(int argc, char *argv[]) {
         (struct option) {0},
     };
     int include_header[HEADER_COUNT] = {0};
-    char options[HEADER_COUNT + 3] = {
-        'a',
-        #define X(n, f, o, opt) o,
-            HEADERS
-        #undef X
-        'h',
-        '\0',
-    };
 
     char opt;
     do {
-        opt = getopt_long(argc, argv, options, longopts, NULL); 
+        opt = getopt_long(argc, argv, header_options, longopts, NULL); 
         switch (opt) {
             case -1:
                 break;

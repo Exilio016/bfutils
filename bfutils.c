@@ -115,26 +115,49 @@ void print_help(const char *name) {
     printf("  --help     -h    Show this help menu and exit\n");
 }
 
+#define HEADERS \
+    X(HASHMAP, "bfutils_hash.h", 'm', "hashmap") \
+    X(VECTOR, "bfutils_vector.h", 'v', "vector") \
+    X(PROCESS, "bfutils_process.h", 'p', "process") \
+    X(TEST, "bfutils_test.h", 't', "test") \
+    X(BUILD, "bfutils_build.h", 'b', "build")
+
+enum Header {
+#define X(name, file, o, opt) HEADER_##name, 
+    HEADERS
+#undef X
+    HEADER_COUNT
+};
+
+const char *header_files[HEADER_COUNT] = {
+#define X(name, file, o, opt) [HEADER_##name] = file, 
+    HEADERS
+#undef X
+};
+
 int main(int argc, char *argv[]) {
     struct option *longopts = (struct option[]) {
-        (struct option) {.name = "all",     .val = 'a', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "hashmap", .val = 'm', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "vector",  .val = 'v', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "process", .val = 'p', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "test",    .val = 't', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "build",   .val = 'b', .has_arg = 0, .flag = NULL},
-        (struct option) {.name = "help",    .val = 'h', .has_arg = 0, .flag = NULL},
+        (struct option) {.name = "all", .val = 'a', .has_arg = 0, .flag = NULL},
+        #define X(n, f, o, opt) \
+        (struct option) {.name = opt, .val = o, .has_arg = 0, .flag = NULL},
+            HEADERS
+        #undef X
+        (struct option) {.name = "help", .val = 'h', .has_arg = 0, .flag = NULL},
         (struct option) {0},
     };
-    int include_hashmap = 0;
-    int include_vector = 0;
-    int include_process = 0;
-    int include_test = 0;
-    int include_build = 0;
+    int include_header[HEADER_COUNT] = {0};
+    char options[HEADER_COUNT + 3] = {
+        'a',
+        #define X(n, f, o, opt) o,
+            HEADERS
+        #undef X
+        'h',
+        '\0',
+    };
 
     char opt;
     do {
-        opt = getopt_long(argc, argv, "amvptbh", longopts, NULL); 
+        opt = getopt_long(argc, argv, options, longopts, NULL); 
         switch (opt) {
             case -1:
                 break;
@@ -143,33 +166,38 @@ int main(int argc, char *argv[]) {
                 exit(0);
                 break;
             case 'm':
-                include_hashmap = 1;
+                include_header[HEADER_HASHMAP] = 1;
                 break;
             case 'v':
-                include_vector = 1;
+                include_header[HEADER_VECTOR] = 1;
                 break;
             case 'p':
-                include_process = 1;
+                include_header[HEADER_PROCESS] = 1;
                 break;
             case 't':
-                include_test = 1;
+                include_header[HEADER_TEST] = 1;
                 break;
             case 'b':
-                include_build = 1;
+                include_header[HEADER_BUILD] = 1;
                 break;
             case 'a':
-                include_hashmap = 1;
-                include_vector = 1;
-                include_process = 1;
-                include_test = 1;
-                include_build = 1;
+                for(int i = 0; i < HEADER_COUNT; i++) {
+                    include_header[i] = 1;
+                }
                 break;
             default:
                 assert(0 && "Unknown option");
         }
     } while(opt > 0);
 
-    if (!include_hashmap && !include_test && !include_vector && !include_process && !include_build) {
+    int need_help = 1;
+    for (int i = 0; i < HEADER_COUNT; i++) {
+        if(include_header[i]) {
+            need_help = 0;
+            break;
+        }
+    }
+    if (need_help) {
         print_help(argv[0]);
         exit(0);
     }
@@ -202,35 +230,13 @@ int main(int argc, char *argv[]) {
     SSL_set_fd(ssl, sock);
     SSL_connect(ssl);
 
-    if (include_vector) {
-        request_file(ssl, "bfutils_vector.h");
-        char *content = get_file_response(ssl);
-        write_file("bfutils_vector.h", content);
-        vector_free(content);
-    }
-    if (include_hashmap) {
-        request_file(ssl, "bfutils_hash.h");
-        char *content = get_file_response(ssl);
-        write_file("bfutils_hash.h", content);
-        vector_free(content);
-    }
-    if (include_process) {
-        request_file(ssl, "bfutils_process.h");
-        char *content = get_file_response(ssl);
-        write_file("bfutils_process.h", content);
-        vector_free(content);
-    }
-    if (include_test) {
-        request_file(ssl, "bfutils_test.h");
-        char *content = get_file_response(ssl);
-        write_file("bfutils_test.h", content);
-        vector_free(content);
-    }
-    if (include_build) {
-        request_file(ssl, "bfutils_build.h");
-        char *content = get_file_response(ssl);
-        write_file("bfutils_build.h", content);
-        vector_free(content);
+    for(int i = 0; i < HEADER_COUNT; i++) {
+        if (include_header[i]) {
+            request_file(ssl, header_files[i]);
+            char *content = get_file_response(ssl);
+            write_file(header_files[i], content);
+            vector_free(content);
+        }
     }
 
     SSL_shutdown(ssl);

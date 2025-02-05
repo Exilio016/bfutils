@@ -164,21 +164,12 @@ int main(int argc, char *argv[]) {
                 print_help(argv[0]);
                 exit(0);
                 break;
-            case 'm':
-                include_header[HEADER_HASHMAP] = 1;
-                break;
-            case 'v':
-                include_header[HEADER_VECTOR] = 1;
-                break;
-            case 'p':
-                include_header[HEADER_PROCESS] = 1;
-                break;
-            case 't':
-                include_header[HEADER_TEST] = 1;
-                break;
-            case 'b':
-                include_header[HEADER_BUILD] = 1;
-                break;
+            #define X(name, f, o, op) \
+            case o: \
+                include_header[HEADER_##name] = 1; \
+                break; 
+                HEADERS
+            #undef X
             case 'a':
                 for(int i = 0; i < HEADER_COUNT; i++) {
                     include_header[i] = 1;

@@ -102,19 +102,6 @@ void write_file(const char *name, const char *content) {
     fclose(fp);
 }
 
-void print_help(const char *name) {
-    printf("BFUtils: CLI tool to add bfutils headers to your project\n");
-    printf("usage: %s [-amvptbh]\n", name);
-    printf("Options:\n");
-    printf("  --all      -a    Download all headers\n");
-    printf("  --hashmap  -m    Download bfutils_hash.h header\n");
-    printf("  --vector   -v    Download bfutils_vector.h header\n");
-    printf("  --process  -p    Download bfutils_process.h header\n");
-    printf("  --test     -t    Download bfutils_test.h header\n");
-    printf("  --build    -b    Download bfutils_build.h header\n");
-    printf("  --help     -h    Show this help menu and exit\n");
-}
-
 #define HEADERS \
     X(HASHMAP, "bfutils_hash.h", 'm', "hashmap") \
     X(VECTOR, "bfutils_vector.h", 'v', "vector") \
@@ -134,6 +121,18 @@ const char *header_files[HEADER_COUNT] = {
     HEADERS
 #undef X
 };
+
+void print_help(const char *name) {
+    printf("BFUtils: CLI tool to add bfutils headers to your project\n");
+    printf("usage: %s [-amvptbh]\n", name);
+    printf("Options:\n");
+    printf("  --all\t\t\t-a\t\tDownload all headers\n");
+    #define X(n, file, o, opt) \
+        printf("  --%s\t\t-%c\t\tDownload %s header\n", opt, o, file);
+        HEADERS
+    #undef X
+    printf("  --help\t\t-h\t\tShow this help menu and exit\n");
+}
 
 int main(int argc, char *argv[]) {
     struct option *longopts = (struct option[]) {

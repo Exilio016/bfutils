@@ -28,6 +28,7 @@ To build the tool you can just run the following command:
 cc -o build build.c
 ./build
 ```
+A `target` directory will be created for the build targets. The final executables will be located at `target/bin`
 #### Usage
 To use the tool just run `bfutils [option]`. Option can be any of the following:
 | Option | Description |
@@ -36,6 +37,7 @@ To use the tool just run `bfutils [option]`. Option can be any of the following:
 | -m | Downloads the bfutils_hash.h to current directory |
 | -p | Downloads the bfutils_process.h to current directory |
 | -t | Downloads the bfutils_test.h to current directory |
+| -b | Downloads the bfutils_build.h to current directory |
 | -a | Downloads all bfutils headers to current directory |
 | -h | Show the help menu and exits |
 
@@ -46,6 +48,7 @@ To use the tool just run `bfutils [option]`. Option can be any of the following:
 | [bfutils_hash.h](./bfutils_hash.h) | Provides Hashmaps |
 | [bfutils_process.h](./bfutils_process.h) | Utility funtions to create and work with process | 
 | [bfutils_test.h](./bfutils_test.h) | Provides macros to create unit tests | 
+| [bfutils_build.h](./bfutils_build.h) | Provides a build system for your project  | 
 
 ## Tests
 The source file [test.c](./test.c) contains unit tests for the libraries. The tests are created using `bfutils_vector.h`

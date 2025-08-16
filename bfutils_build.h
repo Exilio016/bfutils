@@ -146,25 +146,25 @@ int main(int argc, char *argv[]) {
     }
 
     if (mkdir("target", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
-        perror("mkdir");
+        perror("Failed to create target directory");
         exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     if (mkdir("target/bin", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
-        perror("mkdir");
+        perror("Failed to create target/bin directory");
         exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     if (mkdir("target/objs", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST) {
-        perror("mkdir");
+        perror("Failed to create target/objs directory");
         exit(BFUTILS_BUILD_ERROR_MKDIR);
     }
     bfutils_build_fp = fopen("target/build.ninja", "w");
     if (bfutils_build_fp == NULL) {
-        perror("fopen");
+        perror("Failed to open target/build.ninja");
         exit(BFUTILS_BUILD_ERROR_OPEN);
     }
     FILE *fp = fopen("target/stage1.ninja", "w");
     if (fp == NULL) {
-        perror("fopen");
+        perror("Failed to open target/stage1.ninja");
         exit(BFUTILS_BUILD_ERROR_OPEN);
     }
     fprintf(fp, "builddir = target\n");
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     fclose(fp);
     #ifndef STAGE2
     if (execlp("ninja", "ninja", "-f", "./target/stage1.ninja", NULL) < 0) {
-        perror("execlp");
+        perror("Failed to run ninja");
         exit(BFUTILS_BUILD_ERROR_EXEC);
     }
     #endif //STAGE2
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     fclose(bfutils_build_fp);
     bfutils_build_fp = NULL;
     if (execlp("ninja", "ninja", "-f", "target/build.ninja", NULL) < 0) {
-        perror("execlp");
+        perror("Failed to run ninja");
         exit(BFUTILS_BUILD_ERROR_EXEC);
     }
 }

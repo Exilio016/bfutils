@@ -43,7 +43,7 @@ char *get_file_response(SSL *ssl) {
         return NULL;
     }
     long length = 0;
-    for (int i = 0; i < vector_length(msg); i++) {
+    for (size_t i = 0; i < vector_length(msg); i++) {
         if (0 == strncmp("\r\n\r\n", msg + i, 4)) {
             string_push_cstr(body, msg + i + 4);
         }

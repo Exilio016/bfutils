@@ -174,7 +174,7 @@ void bfutils_vector_free_func(void *vector, size_t element_size) {
     if (vector == NULL) return;
 
     if (bfutils_vector_element_free(vector) != NULL) {
-        for(int i = 0; i < bfutils_vector_length(vector); i++) {
+        for(size_t i = 0; i < bfutils_vector_length(vector); i++) {
             bfutils_vector_element_free(vector)((unsigned char*) vector + (element_size * i));
         }
     }
@@ -221,7 +221,7 @@ char *bfutils_string_push_cstr_f(char *str, const char *cstr) {
     if (cstr == NULL) 
         return str;
     bfutils_vector_ensure_capacity(str, vector_length(str) + strlen(cstr) + 1);
-    for (int i = 0; i < strlen(cstr); i++) {
+    for (size_t i = 0; i < strlen(cstr); i++) {
         bfutils_vector_push(str, cstr[i]);
     }
     str[bfutils_vector_length(str)] = '\0'; //Inserts \0 without incrementing length
@@ -230,7 +230,7 @@ char *bfutils_string_push_cstr_f(char *str, const char *cstr) {
 
 char *bfutils_string_push_str_f(char *str, const char *s) {
     bfutils_vector_ensure_capacity(str, vector_length(str) + vector_length(s) + 1);
-    for (int i = 0; i < bfutils_vector_length(s); i++) {
+    for (size_t i = 0; i < bfutils_vector_length(s); i++) {
         bfutils_vector_push(str, s[i]);
     }
     str[bfutils_vector_length(str)] = '\0'; //Inserts \0 without incrementing length

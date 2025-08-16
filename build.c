@@ -1,8 +1,8 @@
-#define BFUTILS_BUILD_CFLAGS "-Wall -O3"
+#define BFUTILS_BUILD_CFLAGS "-Wall -Wextra -Werror -O3"
 #define BFUTILS_BUILD_IMPLEMENTATION
 #include "bfutils_build.h"
 
-void bfutils_build(int argc, char *argv[]) {
+void bfutils_build([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     bfutils_add_executable(
         .name = "bfutils",
         .files = (char*[]) { "bfutils.c" },

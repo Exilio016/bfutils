@@ -113,8 +113,8 @@ enum BFUtilsBuildError {
     BFUTILS_BUILD_ERROR_PKG_CONFIG,
 };
 
-#define bfutils_add_executable(cfg) bfutils_add_executable_fn(cfg, __FILE__, __LINE__);
-#define bfutils_add_shared_library(cfg) bfutils_add_shared_library_fn(cfg, __FILE__, __LINE__);
+#define bfutils_add_executable(...) bfutils_add_executable_fn((BFUtilsBuildCfg){__VA_ARGS__}, __FILE__, __LINE__);
+#define bfutils_add_shared_library(...) bfutils_add_shared_library_fn((BFUtilsBuildCfg){__VA_ARGS__}, __FILE__, __LINE__);
 void bfutils_build(int argc, char *argv[]);
 void bfutils_add_executable_fn(BFUtilsBuildCfg cfg, char *file, int line);
 void bfutils_add_shared_library_fn(BFUtilsBuildCfg cfg, char *file, int line);

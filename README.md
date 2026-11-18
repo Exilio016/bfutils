@@ -27,14 +27,15 @@ int main(void) {
     /* bfu_string_f frees the string automatically when it goes out of scope. */
     bfu_string_f msg = bfu_string_new();
     bfu_string_push(&msg, "bfu_array has ");
-    bfu_string_push_format(&msg, "%llu items", (unsigned long long)3);
-    bfu_string_println(&msg);   /* bfu_array has 3 items */
 
     /* bfu_array_f frees the array automatically when it goes out of scope. */
     bfu_array_f(int) nums = NULL;
     bfu_array_push(nums, 10);
     bfu_array_push(nums, 20);
     bfu_array_push(nums, 30);
+
+    bfu_string_push_format(&msg, "%lu items", bfu_array_size(nums));
+    bfu_string_println(&msg);   /* bfu_array has 3 items */
 
     int last;
     bfu_array_pop(last, nums); /* last == 30, nums now has 2 items */
@@ -47,7 +48,7 @@ int main(void) {
 
     int n = 0;
     bfu_map_get(n, counts, "apples"); /* n == 1 */
-    printf("%d\n", n);
+    printf("apples => %d\n", n);
 
     bfu_map_delete(counts);
     return 0;

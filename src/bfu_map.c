@@ -212,6 +212,11 @@ bfu_result bfu_map_str_insert(void **map, char *key, void *item) {
     bfu_map_header *header = bfu_map_get_header(*map);
     header->size++;
     bool *in_use = (*map) + bfu_map_get_byte_pos(header, pos);
+    if (*in_use) {
+        char **key_addr = (*map) + bfu_map_get_byte_pos(header, pos) + header->key_offset;
+        free(*key_addr);
+    }
+
     *in_use = true;
     char **key_addr = (*map) + bfu_map_get_byte_pos(header, pos) + header->key_offset;
     *key_addr = strdup(key);

@@ -657,12 +657,19 @@ static void case_get_from_null_map(void) {
 }
 
 static void case_grow_oom(void) {
+    /* The map only allocates while growing (load factor > 0.75).  Fill a map
+       past that threshold so the next insert triggers a grow, then fail the
+       grow's malloc and verify the insert reports OOM without inserting. */
     bfu_map(u64, u64) map = NULL;
-    bfu_result result = bfu_map_init(map);
-    TEST_ASSERT(result == BFU_SUCCESS);
+    TEST_ASSERT(bfu_map_init(map) == BFU_SUCCESS);
 
-    u64 key = 1;
-    u64 value = 1;
+    enum { FILL = 97 }; /* 97 / 128 > 0.75 */
+    for (u64 i = 0; i < FILL; i++) {
+        TEST_ASSERT(bfu_map_insert(map, i, i) == BFU_SUCCESS);
+    }
+
+    u64 key = FILL;
+    u64 value = FILL;
     test_fail_next_malloc();
     TEST_ASSERT(bfu_map_insert(map, key, value) == BFU_ERROR_OOM);
     TEST_ASSERT(bfu_map_has_item(map, key) == false);
@@ -670,14 +677,21 @@ static void case_grow_oom(void) {
     bfu_map_delete(map);
 
     bfu_map(char *, u64) str_map = NULL;
-    result = bfu_map_init(str_map);
-    TEST_ASSERT(result == BFU_SUCCESS);
+    TEST_ASSERT(bfu_map_init(str_map) == BFU_SUCCESS);
 
-    char *str_key = "one";
+    for (u64 i = 0; i < FILL; i++) {
+        char key_buf[16];
+        snprintf(key_buf, sizeof(key_buf), "%llu", (unsigned long long) i);
+        TEST_ASSERT(bfu_map_insert(str_map, (char*) key_buf, i) == BFU_SUCCESS);
+    }
+
+    char *str_key = strdup("one");
     u64 str_value = 1;
     test_fail_next_malloc();
     TEST_ASSERT(bfu_map_insert(str_map, str_key, str_value) == BFU_ERROR_OOM);
     TEST_ASSERT(bfu_map_has_item(str_map, str_key) == false);
+    /* The insert failed before taking ownership of str_key, so free it here. */
+    free(str_key);
 
     bfu_map_delete(str_map);
 }

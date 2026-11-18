@@ -93,8 +93,8 @@ cc $(pkg-config --cflags --libs bfutils) myprog.c -o myprog
 **CMake** (after `make install`):
 
 ```cmake
-find_package(bfu REQUIRED)
-target_link_libraries(myprog PRIVATE bfu::bfu)
+find_package(bfutils REQUIRED)
+target_link_libraries(myprog PRIVATE bfutils::bfutils)
 ```
 
 The `install` target also writes a `bfutils.pc` and a `bfuConfig.cmake`, so

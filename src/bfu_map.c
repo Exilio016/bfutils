@@ -101,12 +101,12 @@ bfu_result bfu_map_grow(void **map) {
     if (map == NULL) return BFU_ERROR_NULLPTR;
     bfu_map_header *header = bfu_map_get_header(*map);
     f64 alpha = (double) header->size / (double) header->capacity;
-    void *elements = malloc(header->struct_size * header->size);
-    if (elements == NULL) {
-        return BFU_ERROR_OOM;
-    }
 
     if (alpha > 0.75) {
+        void *elements = malloc(header->struct_size * header->size);
+        if (elements == NULL) {
+            return BFU_ERROR_OOM;
+        }
         int j = 0;
         u8 *bytes = *map;
         for (u64 i = 0; i < header->capacity; i++) {
@@ -135,12 +135,12 @@ bfu_result bfu_map_grow_str(void **map) {
     if (map == NULL) return BFU_ERROR_NULLPTR;
     bfu_map_header *header = bfu_map_get_header(*map);
     f64 alpha = (double) header->size / (double) header->capacity;
-    void *elements = malloc(header->struct_size * header->size);
-    if (elements == NULL) {
-        return BFU_ERROR_OOM;
-    }
 
     if (alpha > 0.75) {
+        void *elements = malloc(header->struct_size * header->size);
+        if (elements == NULL) {
+            return BFU_ERROR_OOM;
+        }
         int j = 0;
         u8 *bytes = *map;
         for (u64 i = 0; i < header->capacity; i++) {

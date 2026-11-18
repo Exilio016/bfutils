@@ -97,7 +97,7 @@ find_package(bfutils REQUIRED)
 target_link_libraries(myprog PRIVATE bfutils::bfutils)
 ```
 
-The `install` target also writes a `bfutils.pc` and a `bfuConfig.cmake`, so
+The `install` target also writes a `bfutils.pc` and a `bfutilsConfig.cmake`, so
 both work out of the box.
 
 ## What's inside
@@ -124,12 +124,15 @@ applicable.
 ### `bfu_array` — `include/bfu_array.h`
 
 Type-generic dynamic arrays built on macros. `bfu_array(T)` is just `T*`.
+The `push`/`pop`/`remove`/`delete` macros take the array variable itself — they
+pass its address internally — so you call them as `bfu_array_push(arr, item)`,
+not `bfu_array_push(&arr, item)`.
 
-- `bfu_array_push(&arr, item)` — append, growing (and auto-initializing) as needed.
-- `bfu_array_pop(&out, arr)` — remove and return the last item.
-- `bfu_array_remove_unordered(&out, arr, idx)` — O(1) removal, order not preserved.
+- `bfu_array_push(arr, item)` — append, growing (and auto-initializing) as needed.
+- `bfu_array_pop(ret, arr)` — remove and return the last item into `ret`.
+- `bfu_array_remove_unordered(ret, arr, idx)` — O(1) removal, order not preserved.
 - `bfu_array_size(arr)` / `bfu_array_capacity(arr)` — query.
-- `bfu_array_init`, `bfu_array_dup`, `bfu_array_delete(&arr)` — manual control.
+- `bfu_array_init`, `bfu_array_dup`, `bfu_array_delete(arr)` — manual control.
 - `bfu_array_f(T) arr = NULL;` — auto-frees when it goes out of scope.
 
 ### `bfu_map` — `include/bfu_map.h`
@@ -140,12 +143,15 @@ Open-addressing hash map hashed with rapidhash. Two flavors:
 - `bfu_map_str(V)` — shorthand for `bfu_map(char*, V)`; string keys are `strdup`ed
   and freed automatically.
 
-- `bfu_map_init(&map)` — set up with deduced sizes.
-- `bfu_map_insert(&map, key, &item)` — insert or update, growing past 75% load.
-- `bfu_map_get(&out, map, key)` / `bfu_map_has_item(map, key)` — lookup.
-- `bfu_map_remove(&out, map, key)` — delete and return the stored item.
+The `init`/`insert`/`get`/`remove`/`delete` macros take the map variable itself,
+and items are passed **by value**, not by pointer.
+
+- `bfu_map_init(map)` — set up with deduced sizes.
+- `bfu_map_insert(map, key, item)` — insert or update, growing past 75% load.
+- `bfu_map_get(ret, map, key)` / `bfu_map_has_item(map, key)` — lookup.
+- `bfu_map_remove(ret, map, key)` — delete and return the stored item into `ret`.
 - `bfu_map_foreach(map, i)` — iterate over in-use slots.
-- `bfu_map_delete(&map)` — frees everything (string keys included).
+- `bfu_map_delete(map)` — frees everything (string keys included).
 
 ## Error handling
 
@@ -161,7 +167,7 @@ Most functions return `bfu_result`, an `i8`:
 | `BFU_ERROR_NOT_FOUND` | -5 | Item not present |
 
 Macros like `bfu_array_push` and `bfu_map_insert` evaluate to a `bfu_result`,
-so you can write `if (bfu_array_push(&arr, item)) { /* handle */ }`.
+so you can write `if (bfu_array_push(arr, item)) { /* handle */ }`.
 
 ## Tests
 

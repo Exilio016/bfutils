@@ -155,6 +155,24 @@ bfu_result bfu_process_run_v(bfu_process *p, char **arguments);
  */
 i8 bfu_process_wait(bfu_process *p);
 
+/* Closes the standard stream file descriptors owned by the parent side of a
+ * child process `p`.
+ *
+ * For each of stdin, stdout, stderr, the descriptor is closed when its kind is
+ * BFU_PROCESS_FD_PIPE (a pipe created by `bfu_process_run`) or
+ * BFU_PROCESS_FD_FILE (a descriptor supplied by the caller). Streams of kind
+ * BFU_PROCESS_FD_NONE and BFU_PROCESS_FD_INHERIT don't need closing
+ *
+ * After calling this function, the descriptors in `p` should not be used
+ * again.
+ *
+ * @param p  Process whose standard stream descriptors are closed. May be NULL,
+ *           in which case the function returns BFU_ERROR_NULLPTR without doing
+ *           anything.
+ * @return   BFU_SUCCESS on success, or BFU_ERROR_NULLPTR if `p` is NULL.
+ */
+bfu_result bfu_process_close(bfu_process *p);
+
 /* Reads all output from a pipe into `s` until EOF.
  *
  * `fd` must be a pipe owned by the parent (kind BFU_PROCESS_FD_PIPE), as set

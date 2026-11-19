@@ -22,6 +22,7 @@
 
 #include "test_framework.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -272,6 +273,92 @@ static void case_fd_write_not_a_pipe(void) {
 }
 
 /* ------------------------------------------------------------------ */
+/* bfu_process_close                                                  */
+/* ------------------------------------------------------------------ */
+
+static void case_close_null(void) {
+    TEST_ASSERT(bfu_process_close(NULL) == BFU_ERROR_NULLPTR);
+}
+
+static void case_close_pipe_fds(void) {
+    int fds[2];
+    TEST_ASSERT(pipe(fds) == 0);
+
+    bfu_process p = {
+        .stdin_fd  = { BFU_PROCESS_FD_PIPE, fds[1] },
+        .stdout_fd = { BFU_PROCESS_FD_PIPE, fds[0] },
+        .stderr_fd = { BFU_PROCESS_FD_PIPE, fds[1] },
+    };
+
+    TEST_ASSERT(bfu_process_close(&p) == BFU_SUCCESS);
+
+    /* All pipe ends should now be closed: reading from them fails with EBADF. */
+    char buf[1];
+    TEST_ASSERT(read(fds[0], buf, 1) < 0);
+    TEST_ASSERT(errno == EBADF);
+    TEST_ASSERT(read(fds[1], buf, 1) < 0);
+    TEST_ASSERT(errno == EBADF);
+}
+
+static void case_close_file_fds(void) {
+    const char *path = "/tmp/bfu_process_test_close_file.txt";
+    FILE *pre = fopen(path, "w");
+    TEST_ASSERT(pre != NULL);
+    fclose(pre);
+
+    int fd = open(path, O_RDONLY);
+    TEST_ASSERT(fd >= 0);
+
+    bfu_process p = {
+        .stdin_fd  = { BFU_PROCESS_FD_FILE, fd },
+        .stdout_fd = { BFU_PROCESS_FD_FILE, fd },
+        .stderr_fd = { BFU_PROCESS_FD_FILE, fd },
+    };
+
+    TEST_ASSERT(bfu_process_close(&p) == BFU_SUCCESS);
+
+    /* The fd should now be closed. */
+    TEST_ASSERT(close(fd) < 0);
+
+    unlink(path);
+}
+
+static void case_close_none_inherit_fds(void) {
+    /* NONE and INHERIT fds are not closed by bfu_process_close. */
+    int fd = open("/dev/null", O_RDONLY);
+    TEST_ASSERT(fd >= 0);
+
+    bfu_process p = {
+        .stdin_fd  = { BFU_PROCESS_FD_NONE, -1 },
+        .stdout_fd = { BFU_PROCESS_FD_INHERIT, fd },
+        .stderr_fd = { BFU_PROCESS_FD_NONE, -1 },
+    };
+
+    TEST_ASSERT(bfu_process_close(&p) == BFU_SUCCESS);
+
+    /* INHERIT fd is left open. */
+    TEST_ASSERT(fcntl(fd, F_GETFD) >= 0);
+    close(fd);
+}
+
+static void case_close_after_run_and_wait(void) {
+    bfu_process p = {
+        .stdout_fd = bfu_process_fd_pipe(),
+        .stderr_fd = bfu_process_fd_none(),
+    };
+
+    TEST_ASSERT(bfu_process_run(&p, "true") == BFU_SUCCESS);
+    TEST_ASSERT(bfu_process_wait(&p) == 0);
+
+    TEST_ASSERT(bfu_process_close(&p) == BFU_SUCCESS);
+
+    /* The stdout pipe read end should now be closed: read fails with EBADF. */
+    char buf[1];
+    TEST_ASSERT(read(p.stdout_fd.fd, buf, 1) < 0);
+    TEST_ASSERT(errno == EBADF);
+}
+
+/* ------------------------------------------------------------------ */
 
 void test_process_suite(void) {
     printf("\n[bfu_process]\n");
@@ -297,4 +384,10 @@ void test_process_suite(void) {
     TEST_RUN(case_fd_read_not_a_pipe);
     TEST_RUN(case_fd_write_null_string);
     TEST_RUN(case_fd_write_not_a_pipe);
+
+    TEST_RUN(case_close_null);
+    TEST_RUN(case_close_pipe_fds);
+    TEST_RUN(case_close_file_fds);
+    TEST_RUN(case_close_none_inherit_fds);
+    TEST_RUN(case_close_after_run_and_wait);
 }

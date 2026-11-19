@@ -225,3 +225,36 @@ bfu_result bfu_process_fd_write(bfu_process_fd fd, bfu_string *s) {
         }
     }
 }
+
+/* Closes the standard stream file descriptors owned by the parent side of a
+ * child process `p`.
+ *
+ * For each of stdin, stdout, stderr, the descriptor is closed when its kind is
+ * BFU_PROCESS_FD_PIPE (a pipe created by `bfu_process_run`) or
+ * BFU_PROCESS_FD_FILE (a descriptor supplied by the caller). Streams of kind
+ * BFU_PROCESS_FD_NONE (connected to /dev/null) and BFU_PROCESS_FD_INHERIT
+ * (inherited from the parent) are left untouched.
+ *
+ * After calling this function, the descriptors in `p` should not be used
+ * again.
+ *
+ * @param p  Process whose standard stream descriptors are closed. May be NULL,
+ *           in which case the function returns BFU_ERROR_NULLPTR without doing
+ *           anything.
+ * @return   BFU_SUCCESS on success, or BFU_ERROR_NULLPTR if `p` is NULL.
+ */
+bfu_result bfu_process_close(bfu_process *p) {
+    if (p == NULL) {
+        return BFU_ERROR_NULLPTR;
+    }
+    if (p->stdin_fd.kind == BFU_PROCESS_FD_PIPE || p->stdin_fd.kind == BFU_PROCESS_FD_FILE) {
+        close(p->stdin_fd.fd);
+    }
+    if (p->stdout_fd.kind == BFU_PROCESS_FD_PIPE || p->stdout_fd.kind == BFU_PROCESS_FD_FILE) {
+        close(p->stdout_fd.fd);
+    }
+    if (p->stderr_fd.kind == BFU_PROCESS_FD_PIPE || p->stderr_fd.kind == BFU_PROCESS_FD_FILE) {
+        close(p->stderr_fd.fd);
+    }
+    return BFU_SUCCESS;
+}

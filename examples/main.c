@@ -34,10 +34,16 @@ int main(void) {
     bfu_map_delete(counts);
 
     bfu_process p = { .stdout_fd = bfu_process_fd_pipe() };
-    bfu_process_run(&p, "echo", "hello world");
-    bfu_process_wait(&p);
+    bfu_process_run_sync(&p, "echo", "-n", "hello world");
     bfu_string_f out = {0};
     bfu_process_fd_read(&out, p.stdout_fd);
+    bfu_process_close(&p);
     bfu_string_println(&out);
+
+    p = (bfu_process){ .stdin_fd = bfu_process_fd_pipe(), .stdout_fd = bfu_process_fd_inherit() };
+    bfu_process_run(&p, "cat", "-");
+    bfu_process_fd_write(p.stdin_fd, &out);
+    bfu_process_wait(&p);
+    bfu_process_close(&p);
     return 0;
 }

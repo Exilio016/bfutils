@@ -139,6 +139,13 @@ static inline bfu_process_fd bfu_process_fd_inherit() {
 bfu_result bfu_process_run_(bfu_process *p, ...);
 bfu_result bfu_process_run_v(bfu_process *p, char **arguments);
 #define bfu_process_run(p, ...) bfu_process_run_((p), __VA_ARGS__, NULL)
+#define bfu_process_run_sync(p, ...) ({ \
+    i32 _err = bfu_process_run_((p), __VA_ARGS__, NULL); \
+    if (_err == BFU_SUCCESS) { \
+        _err = bfu_process_wait((p)); \
+    } \
+    _err; \
+})
 
 /* Waits for the child process `p` to exit and returns its exit status.
  *
@@ -198,3 +205,4 @@ bfu_result bfu_process_fd_read(bfu_string *s, bfu_process_fd fd);
  *            write failure.
  */
 bfu_result bfu_process_fd_write(bfu_process_fd fd, bfu_string *s);
+

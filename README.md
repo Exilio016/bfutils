@@ -191,8 +191,8 @@ Helper functions build `bfu_process_fd` values: `bfu_process_fd_none()`,
 `bfu_process_fd_inherit()`, `bfu_process_fd_pipe()`, `bfu_process_fd_from_fd()`,
 and `bfu_process_fd_from_file()`.
 
-- `bfu_process_run(&p, "cat", NULL)` — spawn a child; `execvp` runs
-  `arguments[0]` with the remaining arguments, terminated by `NULL`.
+- `bfu_process_run(&p, "cat")` — spawn a child; `execvp` runs
+  `arguments[0]` with the remaining arguments. 
 - `bfu_process_run_sync(&p, ...)` — run and wait in one call.
 - `bfu_process_fd_read(&out, p.stdout_fd)` — read all output from a pipe into a
   `bfu_string` until EOF.
@@ -219,6 +219,8 @@ Most functions return `bfu_result`, an `i8`:
 | `BFU_ERROR_OVERFLOW` | -3 | Value overflowed its range/buffer |
 | `BFU_ERROR_OUT_OF_BOUND` | -4 | Index/offset out of bounds |
 | `BFU_ERROR_NOT_FOUND` | -5 | Item not present |
+| `BFU_ERROR_INVALID`   | -6 | Invalid value or file descriptor |
+| `BFU_ERROR_ERRNO`     | -7 | System call failed; check `errno` |
 
 Macros like `bfu_array_push` and `bfu_map_insert` evaluate to a `bfu_result`,
 so you can write `if (bfu_array_push(arr, item)) { /* handle */ }`.

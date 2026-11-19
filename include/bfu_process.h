@@ -128,10 +128,10 @@ static inline bfu_process_fd bfu_process_fd_inherit() {
  *     bfu_process p = { .stdin_fd  = bfu_process_fd_pipe(),
  *                       .stdout_fd = bfu_process_fd_pipe(),
  *                       .stderr_fd = bfu_process_fd_inherit() };
- *     bfu_result err = bfu_process_run(&p, "cat", NULL);
+ *     bfu_result err = bfu_process_run(&p, "cat");
  *
  * @param p          Process to spawn. Must not be NULL.
- * @param ...        Command and arguments, terminated by NULL.
+ * @param ...        Command and arguments.
  * @return           BFU_SUCCESS on success, BFU_ERROR_NULLPTR if `p` or the
  *                   argument list is NULL, BFU_ERROR_OOM if memory runs out,
  *                   BFU_ERROR_OVERFLOW if too many file descriptors are open,

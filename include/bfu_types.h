@@ -54,3 +54,7 @@ typedef i8 bfu_result;
 #define BFU_ERROR_OUT_OF_BOUND -4
 /* The requested item was not found. */
 #define BFU_ERROR_NOT_FOUND -5
+/* A invalid value was passed */
+#define BFU_ERROR_INVALID -6
+/* An internal function failed and set errno */
+#define BFU_ERROR_ERRNO -7

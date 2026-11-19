@@ -20,9 +20,10 @@ LIB_SONAME = lib$(LIB_NAME).so.$(LIB_MAJOR)
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/test
 
-LIB_SRCS  = src/bfu_string.c src/bfu_array.c src/bfu_map.c
+LIB_SRCS  = src/bfu_string.c src/bfu_array.c src/bfu_map.c src/bfu_process.c
 TEST_SRCS = tests/test_main.c tests/test_framework.c \
-            tests/test_array.c tests/test_string.c tests/test_map.c
+            tests/test_array.c tests/test_string.c tests/test_map.c \
+            tests/test_process.c
 
 SRCS = $(LIB_SRCS) $(TEST_SRCS)
 OBJS = $(addprefix $(BUILD_DIR)/,$(notdir $(SRCS:.c=.o)))
@@ -110,7 +111,7 @@ $(BUILD_DIR)/%.o: tests/%.c | $(BUILD_DIR)
 
 test: $(TARGET)
 	@status=0; \
-	for suite in string array map; do \
+	for suite in string array map process; do \
 	    echo ""; \
 	    echo "===== $$suite ====="; \
 	    ./$(TARGET) $$suite; \

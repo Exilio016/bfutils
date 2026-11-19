@@ -44,6 +44,7 @@ LIBRARY_SOURCES = (
     "src/bfu_string.c",
     "src/bfu_array.c",
     "src/bfu_map.c",
+    "src/bfu_process.c",
 )
 
 # Lines that no public call path can reach.  Both branches of the `if` on the
@@ -66,8 +67,20 @@ EXCLUDED_BRANCHES = {
 }
 
 
-def gcov_report(source: str, build_dir: str) -> tuple[int, int, int, int]:
-    """Return (covered_lines, total_lines, covered_branches, total_branches)."""
+def read_source_lines(source: str) -> dict[int, str]:
+    """Return {line_number: source_text} for the given source file."""
+    lines: dict[int, str] = {}
+    with open(source, "r", encoding="utf-8", errors="replace") as handle:
+        for index, line in enumerate(handle, start=1):
+            lines[index] = line.rstrip("\n")
+    return lines
+
+
+def gcov_report(
+    source: str, build_dir: str
+) -> tuple[int, int, int, int, list[int], list[tuple[int, str]]]:
+    """Return (covered_lines, total_lines, covered_branches, total_branches,
+    uncovered_lines, uncovered_branches)."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         process = subprocess.run(
             [
@@ -108,6 +121,8 @@ def gcov_report(source: str, build_dir: str) -> tuple[int, int, int, int]:
     excluded_branches_lines = EXCLUDED_BRANCHES.get(source, set())
     covered_lines = total_lines = 0
     covered_branches = total_branches = 0
+    uncovered_lines: list[int] = []
+    uncovered_branches: list[tuple[int, str]] = []
 
     for line in entry["lines"]:
         line_number = line["line_number"]
@@ -118,6 +133,8 @@ def gcov_report(source: str, build_dir: str) -> tuple[int, int, int, int]:
         total_lines += 1
         if line["count"] > 0:
             covered_lines += 1
+        else:
+            uncovered_lines.append(line_number)
 
         for branch in line.get("branches", []):
             if line_number in excluded_branches_lines:
@@ -125,8 +142,19 @@ def gcov_report(source: str, build_dir: str) -> tuple[int, int, int, int]:
             total_branches += 1
             if branch["count"] > 0:
                 covered_branches += 1
+            else:
+                uncovered_branches.append(
+                    (line_number, branch.get("kind", "branch"))
+                )
 
-    return covered_lines, total_lines, covered_branches, total_branches
+    return (
+        covered_lines,
+        total_lines,
+        covered_branches,
+        total_branches,
+        uncovered_lines,
+        uncovered_branches,
+    )
 
 
 def percentage(covered: int, total: int) -> float:
@@ -140,9 +168,14 @@ def main() -> int:
     print("\ncoverage summary")
     print("----------------")
     for source in LIBRARY_SOURCES:
-        covered_lines, total_lines, covered_branches, total_branches = gcov_report(
-            source, build_dir
-        )
+        (
+            covered_lines,
+            total_lines,
+            covered_branches,
+            total_branches,
+            uncovered_lines,
+            uncovered_branches,
+        ) = gcov_report(source, build_dir)
         line_percent = percentage(covered_lines, total_lines)
         branch_percent = percentage(covered_branches, total_branches)
 
@@ -154,6 +187,20 @@ def main() -> int:
             f"({total_lines:3} lines)  branches {branch_percent:6.2f}% "
             f"({total_branches:3} branches)"
         )
+
+        source_lines = read_source_lines(source)
+
+        if uncovered_lines:
+            print("    uncovered lines:")
+            for line_number in uncovered_lines:
+                text = source_lines.get(line_number, "<line not found>")
+                print(f"        line {line_number:4}: {text}")
+
+        if uncovered_branches:
+            print("    uncovered branches:")
+            for line_number, kind in uncovered_branches:
+                text = source_lines.get(line_number, "<line not found>")
+                print(f"        line {line_number:4} ({kind}): {text}")
 
     excluded_counts = {
         source: len(lines) for source, lines in EXCLUDED_LINES.items() if lines

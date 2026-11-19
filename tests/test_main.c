@@ -25,6 +25,7 @@
 void test_array_suite(void);
 void test_string_suite(void);
 void test_map_suite(void);
+void test_process_suite(void);
 
 int main(int argc, char **argv) {
     const char *only = argc > 1 ? argv[1] : NULL;
@@ -37,6 +38,7 @@ int main(int argc, char **argv) {
     if (only == NULL || strcmp(only, "string") == 0) test_string_suite();
     if (only == NULL || strcmp(only, "array") == 0) test_array_suite();
     if (only == NULL || strcmp(only, "map") == 0) test_map_suite();
+    if (only == NULL || strcmp(only, "process") == 0) test_process_suite();
 
     printf("\n----------------------------------------\n");
     printf("%d cases, %d checks, %d failure%s\n",

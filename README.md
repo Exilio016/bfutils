@@ -65,40 +65,62 @@ gcc -Wall -Wextra -Iinclude example.c src/bfu_string.c src/bfu_array.c \
 ## Building
 
 Requires GCC or Clang (the library uses GNU extensions like `typeof`, statement
-expressions, and `__attribute__((cleanup))`).
+expressions, and `__attribute__((cleanup))`).  The project is built with CMake.
 
 ```sh
-make               # build the test binary and the static + shared libraries
-make test          # run the string, array and map test suites
-make coverage      # instrumented build; requires 100% line/branch coverage
-make install       # install headers, libs, pkg-config and cmake files
-make uninstall     # remove installed files
-make clean         # delete the build directory
+cmake -S . -B build              # configure a debug build 
+cmake --build build              # build the static + shared libraries and tests
+cmake --build build --target test   # run all test suites (string, array, map, process)
+./build/bfu_test string          # one suite only
 ```
 
-Install locations (`PREFIX`, `LIBDIR`, `INCLUDEDIR`, etc.) can be overridden on
-the command line or via environment, same as any Makefile.
+Release build:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+Coverage build (`gcov`, enforces 100% line/branch coverage on `src/*.c`):
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --target coverage
+```
+
+This rebuilds with profiling instrumentation, runs all test suites, and runs
+`tests/check_coverage.py`.
+
+Install locations can be overridden, e.g.
+`cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr`.
+
+```sh
+cmake --install build            # install headers, libs, pkg-config and cmake files
+```
+
+Consumers can then use `find_package(bfutils REQUIRED)` and link
+`bfutils::bfutils`; a `bfutils.pc` pkg-config file is also installed.
 
 ## Using it in your project
 
-**Simplest:** copy `include/` and `src/` into your tree, add `-Iinclude`, and
+- **Simplest:** copy `include/` and `src/` into your tree, add `-Iinclude`, and
 compile the three `.c` files alongside your own. `#include <bfu.h>` pulls in
 everything.
 
-**pkg-config:**
+- **pkg-config:**
 
 ```sh
 cc $(pkg-config --cflags --libs bfutils) myprog.c -o myprog
 ```
 
-**CMake** (after `make install`):
+- **CMake** (after `cmake --install build`):
 
 ```cmake
 find_package(bfutils REQUIRED)
 target_link_libraries(myprog PRIVATE bfutils::bfutils)
 ```
 
-The `install` target also writes a `bfutils.pc` and a `bfutilsConfig.cmake`, so
+The `cmake --install build` step also writes a `bfutils.pc` and a `bfutilsConfig.cmake`, so
 both work out of the box.
 
 ## What's inside
@@ -154,6 +176,37 @@ and items are passed **by value**, not by pointer.
 - `bfu_map_foreach(map, i)` — iterate over in-use slots.
 - `bfu_map_delete(map)` — frees everything (string keys included).
 
+### `bfu_process` — `include/bfu_process.h`
+
+Spawn and interact with child processes. A `bfu_process` describes a child and
+how each of its standard streams (stdin, stdout, stderr) is connected to the
+parent:
+
+- `BFU_PROCESS_FD_NONE` — stream connected to `/dev/null`
+- `BFU_PROCESS_FD_INHERIT` — stream inherited from the parent
+- `BFU_PROCESS_FD_PIPE` — pipe created between parent and child
+- `BFU_PROCESS_FD_FILE` — an existing file descriptor is used
+
+Helper functions build `bfu_process_fd` values: `bfu_process_fd_none()`,
+`bfu_process_fd_inherit()`, `bfu_process_fd_pipe()`, `bfu_process_fd_from_fd()`,
+and `bfu_process_fd_from_file()`.
+
+- `bfu_process_run(&p, "cat", NULL)` — spawn a child; `execvp` runs
+  `arguments[0]` with the remaining arguments, terminated by `NULL`.
+- `bfu_process_run_sync(&p, ...)` — run and wait in one call.
+- `bfu_process_fd_read(&out, p.stdout_fd)` — read all output from a pipe into a
+  `bfu_string` until EOF.
+- `bfu_process_fd_write(p.stdin_fd, &input)` — write a string's contents to a
+  pipe until fully written.
+- `bfu_process_wait(&p)` — close stdin's write end (signaling EOF) and reap the
+  child, returning its exit status.
+- `bfu_process_close(&p)` — close the parent-owned stream descriptors.
+
+All functions return `bfu_result` (`BFU_SUCCESS == 0`, negative on error) and
+document `BFU_ERROR_NULLPTR` / `BFU_ERROR_OOM` / `BFU_ERROR_OVERFLOW` /
+`BFU_ERROR_NOT_FOUND` / `BFU_ERROR_OUT_OF_BOUND` / `BFU_ERROR_INVALID` /
+`BFU_ERROR_ERRNO` where applicable.
+
 ## Error handling
 
 Most functions return `bfu_result`, an `i8`:
@@ -178,9 +231,9 @@ are exercised by wrapping `malloc`, `realloc`, `vsnprintf` and `free`
 (`tests/test_framework.c` provides the wrappers).
 
 ```sh
-make test        # all suites
-./build/test string   # one suite only
-make coverage    # 100% coverage gate on src/*.c
+cmake --build build --target test   # all suites
+./build/bfu_test string   # one suite only
+cmake --build build --target coverage   # 100% coverage gate on src/*.c
 ```
 
 ## License

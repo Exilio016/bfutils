@@ -126,17 +126,27 @@ bfu_result bfu_process_run_v(bfu_process *p, char **arguments) {
         execvp(arguments[0], arguments);
     }
 
-    if (p->stdin_fd.kind == BFU_PROCESS_FD_PIPE ||p->stdin_fd.kind == BFU_PROCESS_FD_NONE) {
+    if (p->stdin_fd.kind == BFU_PROCESS_FD_PIPE) {
         p->stdin_fd.fd = stdin_fds[1];
         close(stdin_fds[0]);
     }
-    if (p->stdout_fd.kind == BFU_PROCESS_FD_PIPE ||p->stdout_fd.kind == BFU_PROCESS_FD_NONE) {
+    if (p->stdout_fd.kind == BFU_PROCESS_FD_PIPE) {
         p->stdout_fd.fd = stdout_fds[0];
         close(stdout_fds[1]);
     }
-    if (p->stderr_fd.kind == BFU_PROCESS_FD_PIPE ||p->stderr_fd.kind == BFU_PROCESS_FD_NONE) {
+    if (p->stderr_fd.kind == BFU_PROCESS_FD_PIPE) {
         p->stderr_fd.fd = stderr_fds[0];
         close(stderr_fds[1]);
+    }
+
+    if (p->stdin_fd.kind == BFU_PROCESS_FD_NONE) {
+        close_pair(stdin_fds);
+    }
+    if (p->stdout_fd.kind == BFU_PROCESS_FD_NONE) {
+        close_pair(stdout_fds);
+    }
+    if (p->stderr_fd.kind == BFU_PROCESS_FD_NONE) {
+        close_pair(stderr_fds);
     }
 
     close(dev_null);

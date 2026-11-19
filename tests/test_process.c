@@ -273,6 +273,41 @@ static void case_fd_write_not_a_pipe(void) {
 }
 
 /* ------------------------------------------------------------------ */
+/* System call errors mapped to semantic errors                       */
+/* ------------------------------------------------------------------ */
+
+static void case_fd_read_ebadf_maps_to_invalid(void) {
+    /* Reading from a closed pipe yields EBADF, which now maps to
+       BFU_ERROR_INVALID instead of the generic BFU_ERROR_ERRNO. */
+    int fds[2];
+    TEST_ASSERT(pipe(fds) == 0);
+    close(fds[0]);
+
+    bfu_process_fd read_fd = { BFU_PROCESS_FD_PIPE, fds[0] };
+    bfu_string_f s = {0};
+
+    TEST_ASSERT(bfu_process_fd_read(&s, read_fd) == BFU_ERROR_INVALID);
+
+    close(fds[1]);
+}
+
+static void case_fd_write_ebadf_maps_to_invalid(void) {
+    /* Writing to a closed pipe yields EBADF, which now maps to
+       BFU_ERROR_INVALID instead of the generic BFU_ERROR_ERRNO. */
+    int fds[2];
+    TEST_ASSERT(pipe(fds) == 0);
+    close(fds[1]);
+
+    bfu_process_fd write_fd = { BFU_PROCESS_FD_PIPE, fds[1] };
+    bfu_string_f s = {0};
+    TEST_ASSERT(bfu_string_push_cstr(&s, "x") == BFU_SUCCESS);
+
+    TEST_ASSERT(bfu_process_fd_write(write_fd, &s) == BFU_ERROR_INVALID);
+
+    close(fds[0]);
+}
+
+/* ------------------------------------------------------------------ */
 /* bfu_process_close                                                  */
 /* ------------------------------------------------------------------ */
 
@@ -382,8 +417,10 @@ void test_process_suite(void) {
 
     TEST_RUN(case_fd_read_null_string);
     TEST_RUN(case_fd_read_not_a_pipe);
+    TEST_RUN(case_fd_read_ebadf_maps_to_invalid);
     TEST_RUN(case_fd_write_null_string);
     TEST_RUN(case_fd_write_not_a_pipe);
+    TEST_RUN(case_fd_write_ebadf_maps_to_invalid);
 
     TEST_RUN(case_close_null);
     TEST_RUN(case_close_pipe_fds);

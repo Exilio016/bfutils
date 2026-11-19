@@ -33,6 +33,29 @@ static i32 set_fds_nonblock(int *fds){
     return 1;
 }
 
+static bfu_result errno_to_result(int errnum) {
+    switch (errnum) {
+        case ENOMEM:
+            return BFU_ERROR_OOM;
+        case EMFILE:
+        case ENFILE:
+        case ENOSPC:
+            return BFU_ERROR_OVERFLOW;
+        case ENOENT:
+            return BFU_ERROR_NOT_FOUND;
+        case EBADF:
+        case EFAULT:
+        case EINVAL:
+        case EACCES:
+        case EPERM:
+        case EISDIR:
+        case ENOTDIR:
+            return BFU_ERROR_INVALID;
+        default:
+            return BFU_ERROR_ERRNO;
+    }
+}
+
 static bfu_result prepare_fds(bfu_process_fd fd, i32 null_fd, i32 *fds) {
     switch (fd.kind) {
         case BFU_PROCESS_FD_NONE: 
@@ -43,7 +66,7 @@ static bfu_result prepare_fds(bfu_process_fd fd, i32 null_fd, i32 *fds) {
             break;
         case BFU_PROCESS_FD_PIPE:
             if (pipe(fds) < 0) {
-                return BFU_ERROR_ERRNO;
+                return errno_to_result(errno);
             }
             break;
         case BFU_PROCESS_FD_FILE:
@@ -68,7 +91,7 @@ bfu_result bfu_process_run_v(bfu_process *p, char **arguments) {
 
     i32 dev_null = open("/dev/null", O_RDWR);
     if (dev_null < 0) {
-        return BFU_ERROR_ERRNO;
+        return errno_to_result(errno);
     }
     i32 stdin_fds[2];
     i32 stdout_fds[2];
@@ -83,18 +106,18 @@ bfu_result bfu_process_run_v(bfu_process *p, char **arguments) {
     
     if (p->stdout_fd.kind == BFU_PROCESS_FD_PIPE) {
         if (!set_fds_nonblock(stdout_fds)) {
-            return BFU_ERROR_ERRNO;
+            return errno_to_result(errno);
         }
     }
     if (p->stderr_fd.kind == BFU_PROCESS_FD_PIPE) {
         if (!set_fds_nonblock(stderr_fds)) {
-            return BFU_ERROR_ERRNO;
+            return errno_to_result(errno);
         }
     }
 
     p->pid = fork();
     if (p->pid < 0) {
-        res = BFU_ERROR_ERRNO;
+        res = errno_to_result(errno);
         goto err;
     }
     if (p->pid == 0) { //child
@@ -201,7 +224,7 @@ bfu_result bfu_process_fd_read(bfu_string *s, bfu_process_fd fd) {
             if (errno == EAGAIN || errno == EINTR) {
                 continue;
             }
-            return BFU_ERROR_ERRNO;
+            return errno_to_result(errno);
         }
         if (n == 0) {
             return BFU_SUCCESS;
@@ -226,7 +249,7 @@ bfu_result bfu_process_fd_write(bfu_process_fd fd, bfu_string *s) {
             if (errno == EAGAIN || errno == EINTR) {
                 continue;
             }
-            return BFU_ERROR_ERRNO;
+            return errno_to_result(errno);
         }
         remaining -= n;
         idx += n;
@@ -236,23 +259,6 @@ bfu_result bfu_process_fd_write(bfu_process_fd fd, bfu_string *s) {
     }
 }
 
-/* Closes the standard stream file descriptors owned by the parent side of a
- * child process `p`.
- *
- * For each of stdin, stdout, stderr, the descriptor is closed when its kind is
- * BFU_PROCESS_FD_PIPE (a pipe created by `bfu_process_run`) or
- * BFU_PROCESS_FD_FILE (a descriptor supplied by the caller). Streams of kind
- * BFU_PROCESS_FD_NONE (connected to /dev/null) and BFU_PROCESS_FD_INHERIT
- * (inherited from the parent) are left untouched.
- *
- * After calling this function, the descriptors in `p` should not be used
- * again.
- *
- * @param p  Process whose standard stream descriptors are closed. May be NULL,
- *           in which case the function returns BFU_ERROR_NULLPTR without doing
- *           anything.
- * @return   BFU_SUCCESS on success, or BFU_ERROR_NULLPTR if `p` is NULL.
- */
 bfu_result bfu_process_close(bfu_process *p) {
     if (p == NULL) {
         return BFU_ERROR_NULLPTR;

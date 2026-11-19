@@ -133,8 +133,11 @@ static inline bfu_process_fd bfu_process_fd_inherit() {
  * @param p          Process to spawn. Must not be NULL.
  * @param ...        Command and arguments, terminated by NULL.
  * @return           BFU_SUCCESS on success, BFU_ERROR_NULLPTR if `p` or the
- *                   argument list is NULL, or BFU_ERROR_ERRNO on system call
- *                   failure.
+ *                   argument list is NULL, BFU_ERROR_OOM if memory runs out,
+ *                   BFU_ERROR_OVERFLOW if too many file descriptors are open,
+ *                   BFU_ERROR_NOT_FOUND if the command cannot be found,
+ *                   BFU_ERROR_INVALID if a stream kind or fd is bad, or
+ *                   BFU_ERROR_ERRNO for any other system call failure.
  */
 bfu_result bfu_process_run_(bfu_process *p, ...);
 bfu_result bfu_process_run_v(bfu_process *p, char **arguments);
@@ -188,8 +191,9 @@ bfu_result bfu_process_close(bfu_process *p);
  * @param s   String to append the read data to. Must not be NULL.
  * @param fd  Pipe to read from. Must be of kind BFU_PROCESS_FD_PIPE.
  * @return    BFU_SUCCESS on success (EOF reached), BFU_ERROR_NULLPTR if `s`
- *            is NULL, BFU_ERROR_INVALID if `fd` is not a pipe, or
- *            BFU_ERROR_ERRNO on read failure.
+ *            is NULL, BFU_ERROR_INVALID if `fd` is not a pipe or is closed,
+ *                   BFU_ERROR_OOM if appending to `s` runs out of memory, or
+ *            BFU_ERROR_ERRNO on any other read failure.
  */
 bfu_result bfu_process_fd_read(bfu_string *s, bfu_process_fd fd);
 
@@ -201,8 +205,8 @@ bfu_result bfu_process_fd_read(bfu_string *s, bfu_process_fd fd);
  * @param fd  Pipe to write to. Must be of kind BFU_PROCESS_FD_PIPE.
  * @param s   String whose contents are written. Must not be NULL.
  * @return    BFU_SUCCESS on success, BFU_ERROR_NULLPTR if `s` is NULL,
- *            BFU_ERROR_INVALID if `fd` is not a pipe, or BFU_ERROR_ERRNO on
- *            write failure.
+ *            BFU_ERROR_INVALID if `fd` is not a pipe or is closed, or
+ *            BFU_ERROR_ERRNO on any other write failure.
  */
 bfu_result bfu_process_fd_write(bfu_process_fd fd, bfu_string *s);
 

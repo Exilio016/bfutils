@@ -81,16 +81,26 @@ def gcov_report(
 ) -> tuple[int, int, int, int, list[int], list[tuple[int, str]]]:
     """Return (covered_lines, total_lines, covered_branches, total_branches,
     uncovered_lines, uncovered_branches)."""
+    # Locate the compiled object file for this source under build_dir.  CMake
+    # nests objects under CMakeFiles/<target>.dir/ and names them <file>.c.o,
+    # while a flat Makefile layout uses <file>.o.  gcov accepts the object file
+    # directly and locates the matching .gcda next to it.
+    object_name = os.path.basename(source) + ".o"
+    object_path = None
+    for candidate in glob.glob(os.path.join(build_dir, "**", object_name), recursive=True):
+        object_path = candidate
+        break
+    if object_path is None and source.endswith(".c"):
+        flat_name = os.path.basename(source)[:-2] + ".o"
+        for candidate in glob.glob(os.path.join(build_dir, "**", flat_name), recursive=True):
+            object_path = candidate
+            break
+    if object_path is None:
+        raise SystemExit(f"no object file found for {source} in {build_dir}")
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         process = subprocess.run(
-            [
-                "gcov",
-                "-b",
-                "--json-format",
-                "-o",
-                os.path.abspath(build_dir),
-                os.path.abspath(source),
-            ],
+            ["gcov", "-b", "--json-format", os.path.abspath(object_path)],
             cwd=tmp_dir,
             capture_output=True,
             text=True,

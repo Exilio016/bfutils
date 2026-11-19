@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "bfu_process.h"
+#include "bfu.h"
 
 /* ------------------------------------------------------------------ */
 /* bfu_process_run / bfu_process_run_v argument validation            */

@@ -32,5 +32,12 @@ int main(void) {
     printf("apples => %d\n", n);
 
     bfu_map_delete(counts);
+
+    bfu_process p = { .stdout_fd = bfu_process_fd_pipe() };
+    bfu_process_run(&p, "echo", "hello world");
+    bfu_process_wait(&p);
+    bfu_string_f out = {0};
+    bfu_process_fd_read(&out, p.stdout_fd);
+    bfu_string_println(&out);
     return 0;
 }
